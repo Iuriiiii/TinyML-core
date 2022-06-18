@@ -1,0 +1,22 @@
+{
+  "name": "tinyml-core",
+  "version": "1.0.1",
+  "description": "TinyML core",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "Oscar Alexander Casas",
+  "files": [
+    "index.js",
+    "test"
+  ],
+  "engines": {
+    "node": ">=8"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^10.0.0"
+  }
+}
