@@ -238,36 +238,4 @@ f1: for(; i < chars.length; i++)
     return success(content, properties, contexts);
 }
 
-// tinyML.translate = function(compiled, properties = {})
-// {
-//     let res = '';
-
-//     if(typeof compiled === 'string')
-//         compiled = tinyML.compile(compiled, properties);
-
-//     function toHTML(obj)
-//     {
-//         function toHTMLParams(params)
-//         {
-//             return (params || '') !== '' ? ` ${params}` : '';
-//         }
-
-//         return `<${obj.tag}${toHTMLParams(obj.params)}>${tinyML.translate(obj.childs)}</${obj.tag}>`;
-//     }
-
-//     compiled.forEach(c => {
-//         switch(true)
-//         {
-//             case typeof c === 'string':
-//                 res += c;
-//             break;
-//             case typeof c === 'object':
-//                 res += toHTML(c);
-//             break;
-//         }
-//     });
-
-//     return res;
-// }
-
 module.exports = Object.freeze({compile: compile});
