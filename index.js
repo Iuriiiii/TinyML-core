@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 function compile(source, properties = {}, context = {pos: 0, line: 1})
 {
