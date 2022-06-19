@@ -4,13 +4,16 @@ function compile(source, properties = {}, context = {pos: 0, line: 1})
 {
     if(typeof source === 'object')
     {
-        source = source.source;
+        if(!'source' in source)
+            return [];
 
-        if(typeof source.context !== 'undefined')
+        if('context' in source)
             context = source.context;
 
-        if(typeof source.properties !== 'undefined')
+        if('properties' in source)
             properties = source.properties;
+
+        source = source.source;
     }
 
     if(typeof source !== 'string')
