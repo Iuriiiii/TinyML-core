@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { compile, translate } = require('../index.js');
+const { compile, translate, langEngine } = require('../index.js');
 
 describe('Return Object', () =>
 {
@@ -112,6 +112,42 @@ describe('Translate', () =>
         it('The method \'translate\' with lang \'vb\' should return a \'success\' false', () =>
         {
             assert.equal(translate('html{%tag%{Hola Mundo}}', 'vb').success, false);
+        });
+    });
+});
+
+describe('Langs', () =>
+{
+    describe('Langs I', () =>
+    {
+        it('The method \'langEngine\' without arguments should return an object', () =>
+        {
+            assert.ok(langEngine());
+        });
+    });
+
+    describe('Langs II', () =>
+    {
+        it('The method \'langEngine\' should has an html engine', () =>
+        {
+            assert.ok(langEngine().html);
+        });
+    });
+
+    describe('Langs III', () =>
+    {
+        it('The method \'langEngine\' should return the html engine', () =>
+        {
+            assert.ok(typeof langEngine('html') === 'function');
+        });
+    });
+
+    describe('Langs VI', () =>
+    {
+        it('The method \'langEngine\' should has html engine deleted', () =>
+        {
+            langEngine('html', null);
+            assert.ok(typeof langEngine('html') === 'undefined');
         });
     });
 });

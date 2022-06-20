@@ -269,7 +269,13 @@ let langs = {html: (obj) =>
             return `<${obj.tag}${params}/>`;
     
         let source = `<${obj.tag}${params}>`;
-    
+
+        switch(obj.tag)
+        {
+            case 'html5': source = `<!DOCTYPE html>${source}`;
+            break;
+        }
+        
         obj.childs.forEach(e => {
             source += langs.html(e);
         });
@@ -313,22 +319,41 @@ function translate(source, properties = {}, lang = 'html')
 }
 
 /**
+ * Gets or sets a lang engine.
  * 
- * @param {String} lang - The lang to create or overwrite.
- * @param {Function|Boolean} callback - Falsy if you want to delete the lang.
+ * @param {String} lang
+ * @param {Function|Null} [callback]
+ * 
+ * If just the first param is set, the engine function of the lang will be returned,
+ * otherwise, all the langs will be returned with their respective engine functions.
+ * If the first param is set and the second one is a function, the engine function
+ * will be set on the lang.
+ * If the first param is set and the second one is null, the actual engine function
+ * of the lang will be deleted.
+ * 
  */
-function setLang(lang, callback)
+function langEngine(lang, callback)
 {
-    if(typeof lang !== 'string')
-        return;
-
-    if(!callback)
-        delete langs[lang];
-
-    if(typeof callback !== 'function')
-        return;
-
-    langs[lang] = callback;
+    switch(typeof lang)
+    {
+        case 'undefined': return langs;
+        case 'string':
+            if(callback === null)
+            {
+                delete langs[lang];
+                return;
+            }
+        
+            switch(typeof callback)
+            {
+                case 'undefined': return langs[lang];
+                case 'function': langs[lang] = callback;
+                default: return;
+            }
+        default: return;
+    }
 }
 
-module.exports = Object.freeze({compile: compile, translate: translate, setLang: setLang});
+
+
+module.exports = Object.freeze({compile: compile, translate: translate, langEngine: langEngine});
