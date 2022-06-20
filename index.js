@@ -289,12 +289,13 @@ let langs = {html: (obj) =>
         if(selfCloseTags.includes(obj.tag))
             return `<${obj.tag}${params}/>`;
     
-        let source = `<${obj.tag}${params}>`;
+        let source;
 
         switch(obj.tag)
         {
-            case 'html5': source = `<!DOCTYPE html>${source}`;
+            case 'html5': source = `<!DOCTYPE html><html${params}>`;
             break;
+            default: source = `<${obj.tag}${params}>`;
         }
         
         obj.childs.forEach(e => {
