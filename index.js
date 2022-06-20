@@ -293,7 +293,7 @@ let langs = {html: (obj) =>
 
         switch(obj.tag)
         {
-            case 'html5': source = `<!DOCTYPE html><html${params}>`;
+            case 'html5': obj.tag = 'html', source = `<!DOCTYPE html><html${params}>`;
             break;
             default: source = `<${obj.tag}${params}>`;
         }
