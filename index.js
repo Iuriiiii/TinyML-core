@@ -103,12 +103,13 @@ function compile(source, properties = {}, context = {pos: 0, line: 1}, first = t
         isString = !1,
         isComment = 0,
         contexts = {prev: {pos: context.pos, line: context.line}},
-        content = {tag:'', prev: '', actual: '', last: '', params: '', property: ''},
+        content = {tag:'', prev: '', actual: '', last: '', property: ''},
         line = context.line,
         wasTag = !1,
         pos = 1,
         i = 0,
-        isProperty = !1;
+        isProperty = !1,
+        splitted;
 
 f1: for(; i < chars.length; i++)
     {
@@ -145,6 +146,15 @@ f1: for(; i < chars.length; i++)
                 break;
             case isString:
             break;
+            case c === ';':
+                if(content.tag === '' || codeLevel > 0 || isParam > 0 || !('params' in content))
+                    break;
+
+                contexts.last = {pos: i+1, line: line};
+                content.last = chars.slice(i+1).join('');
+                wasTag = true;
+
+            break f1;
             case isSpace(c):
                 if(c === '\n')
                 {
@@ -171,17 +181,18 @@ f1: for(; i < chars.length; i++)
                 content.property = '';
             break;
             case c === '(':
-                if(codeLevel > 0)
+                if(codeLevel > 0 || content.tag === '')
                     break;
                 
                 if(isParam > 0)
                     return error(`Invalid use of '(' at ${line}:${pos}`);
 
-                if(content.tag === '')
-                    break;
+                if('params' in content)
+                    return error(`Duplicate use of '(' at ${line}:${pos}`);
 
                 contexts.params = {pos: pos, line: line};
                 isParam++;
+                content.params = '';
             continue;
             case c === ')':
                 if(isParam === 0)
@@ -204,9 +215,19 @@ f1: for(; i < chars.length; i++)
                     return error(`Tag expected at ${line}:${pos}`);
                 
                 if(++codeLevel === 1)
+                {
+                    if(content.tag.includes(';'))
+                    {
+                        splitted = content.tag.split(';');
+                        content.tag = splitted.pop();
+                        content.prev += splitted.join(';');
+                    }
+
                     continue;
+                }
 
                 contexts.actual = {pos: i+1, line: line};
+
             break;
             case c === '}':
                 if(--codeLevel < 0)
@@ -261,7 +282,7 @@ const toParams = (params) => (params || '')  === '' ? '' : ` ${params}`;
 let langs = {html: (obj) =>
     {
         if(typeof obj === 'string')
-            return obj;
+            return obj.replaceAll('\\n','<br>');
     
         let params = toParams(obj.params);
     

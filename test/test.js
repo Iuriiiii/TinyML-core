@@ -54,6 +54,46 @@ describe('Tags', () =>
             assert.equal(compile('html{div{Hola Mundo}}').content[0].childs[0].tag, 'div');
         });
     });
+
+    describe('Tag III', () =>
+    {
+        it('The tag \'meta\' should be parsed correctly', () =>
+        {
+            assert.equal(compile('html{meta();div{Hola Mundo}}').content[0].childs[0].tag, 'meta');
+        });
+    });
+
+    describe('Tag VI', () =>
+    {
+        it('The tag after \'meta\' should be parsed correctly', () =>
+        {
+            assert.equal(compile('html{meta();div{Hola Mundo}}').content[0].childs[1].tag, 'div');
+        });
+    });
+
+    describe('Tag V', () =>
+    {
+        it('The attributes of tag \'meta\' should be parsed correctly', () =>
+        {
+            assert.equal(compile('html{meta(attr="hola mundo");div{Hola Mundo}}').content[0].childs[0].params, 'attr="hola mundo"');
+        });
+    });
+
+    describe('Tag VI', () =>
+    {
+        it('The tag \'strong\' next to \'p\' content must be parsed correctly', () =>
+        {
+            assert.equal(compile('p{Hola, esto de;strong{be}ría ser un buen texto}').content[0].childs[1].tag, 'strong');
+        });
+    });
+
+    describe('Tag VII', () =>
+    {
+        it('The \'strong\' tag content next to \'p\' content must be parsed correctly', () =>
+        {
+            assert.equal(compile('p{Hola, esto de;strong{be}ría ser un buen texto}').content[0].childs[1].childs[0], 'be');
+        });
+    });
 });
 
 describe('Comments', () =>

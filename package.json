@@ -1,6 +1,6 @@
 {
   "name": "tinyml-core",
-  "version": "1.4.1",
+  "version": "1.4.6",
   "description": "TinyML core",
   "main": "index.js",
   "scripts": {
