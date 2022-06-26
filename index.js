@@ -376,6 +376,4 @@ function langEngine(lang, callback)
     }
 }
 
-
-if(typeof module !== 'undefined')
-    module.exports = Object.freeze({compile: compile, translate: translate, langEngine: langEngine});
+export {compile, translate, langEngine};

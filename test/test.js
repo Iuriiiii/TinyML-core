@@ -1,5 +1,5 @@
-const assert = require('assert');
-const { compile, translate, langEngine } = require('../index.js');
+import assert from 'assert';
+import { translate, compile, langEngine } from '../index.js';
 
 describe('Return Object', () =>
 {
