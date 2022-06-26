@@ -1,5 +1,4 @@
-"use strict";
-const { assert } = require('assert');
+const assert = require('assert');
 const { translate, compile, langEngine } = require('../index.js');
 
 describe('Return Object', () =>
