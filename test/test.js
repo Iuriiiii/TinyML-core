@@ -1,5 +1,6 @@
-import assert from 'assert';
-import { translate, compile, langEngine } from '../index.js';
+"use strict";
+const { assert } = require('assert');
+const { translate, compile, langEngine } = require('../index.js');
 
 describe('Return Object', () =>
 {
