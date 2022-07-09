@@ -3,6 +3,7 @@
   "version": "1.5.2",
   "description": "TinyML core",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "mocha"
   },

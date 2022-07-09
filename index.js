@@ -23,7 +23,7 @@ SOFTWARE.
 */
 "use strict";
 
-class TinyMLCore
+export default class TinyMLCore
 {
     /**
      * Parses the TinyML's source code and return an object from it.
@@ -78,7 +78,7 @@ class TinyMLCore
             return [source.slice(1, -1)];
 
         const isSpace = (c) => ' \f\n\r\t\v'.includes(c);
-        const error = (d) => {return {success: false, description: d}};
+        const error = (d) => ({success: false, description: d});
         const getContentByPropertyFormat = (f, obj) => {
             let m = f.split(f.includes('.') ? '.' : '>');
     
@@ -227,11 +227,7 @@ class TinyMLCore
                     if(++codeLevel === 1)
                     {
                         if(content.tag.includes(';'))
-                        {
-                            splitted = content.tag.split(';');
-                            content.tag = splitted.pop();
-                            content.prev += splitted.join(';');
-                        }
+                            splitted = content.tag.split(';'), content.tag = splitted.pop(), content.prev += splitted.join(';');
 
                         continue;
                     }

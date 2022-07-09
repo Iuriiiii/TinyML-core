@@ -1,6 +1,6 @@
-const assert = require('assert');
-const TinyMLCore = require('../index.js');
-const randomString = require("randomstring");
+import assert from 'assert';
+import TinyMLCore from '../index.js';
+import randomString from "randomstring";
 
 describe('Return Object', () =>
 {
