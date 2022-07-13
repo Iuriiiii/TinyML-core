@@ -36,6 +36,31 @@ describe('Return Object', () =>
         });
     });
 
+    describe('Return VII', () =>
+    {
+        it('Async shoud be correct, returning a tag', async () =>
+        {
+            assert.ok((await TinyMLCore.compileAsync('html{}'))[0].tag);
+        });
+    });
+
+    describe('Return VIII', () =>
+    {
+        it('Async shoud be incorrect, returning a description', async () =>
+        {
+            assert.ok((await TinyMLCore.compileAsync('{}').catch(d => d)));
+        });
+    });
+
+    describe('Return IX', () =>
+    {
+        it('Async shoud be incorrect, returning a description about unclosed bracket', async () =>
+        {
+            // console.log((await TinyMLCore.compileAsync('html{').catch(d => d)));
+            assert.ok((await TinyMLCore.compileAsync('html{').catch(d => d)));
+        });
+    });
+
 });
 
 describe('Tags', () =>

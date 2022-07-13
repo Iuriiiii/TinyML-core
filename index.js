@@ -96,7 +96,7 @@ export default class TinyMLCore
                 res.push(contents.prev);
 
             if(contents.tag !== '')
-                res.push({tag: contents.tag, params: contents.params === '' ? undefined : contents.params, childs: TinyMLCore.compile(contents.actual, properties, contexts.actual, false)});
+                res.push({tag: contents.tag, params: contents.params === '' ? undefined : contents.params, childs: TinyMLCore.compile(contents.code, properties, contexts.code, false)});
 
             if(content.last.trim() !== '')
                 res.push(...TinyMLCore.compile(contents.last, properties, contexts.last, false));
@@ -113,7 +113,7 @@ export default class TinyMLCore
             isString = !1,
             isComment = 0,
             contexts = {prev: {pos: context.pos, line: context.line}},
-            content = {tag:'', prev: '', actual: '', last: '', property: ''},
+            content = {tag:'', prev: '', code: '', last: '', property: ''},
             line = context.line,
             wasTag = !1,
             pos = 1,
@@ -224,6 +224,8 @@ export default class TinyMLCore
                     if(content.tag === '')
                         return error(`Tag expected at ${line}:${pos}`);
                     
+                    contexts.code = {pos: i+1, line: line};
+
                     if(++codeLevel === 1)
                     {
                         if(content.tag.includes(';'))
@@ -231,8 +233,6 @@ export default class TinyMLCore
 
                         continue;
                     }
-
-                    contexts.actual = {pos: i+1, line: line};
 
                 break;
                 case c === '}':
@@ -266,7 +266,7 @@ export default class TinyMLCore
                 break;
             }
 
-            content[isProperty ? 'property' : codeLevel > 0 ? 'actual' : isParam > 0 ? 'params' : 'tag'] += c, pos++;
+            content[isProperty ? 'property' : codeLevel > 0 ? 'code' : isParam > 0 ? 'params' : 'tag'] += c, pos++;
         }
 
         if(isComment > 0)
@@ -275,11 +275,25 @@ export default class TinyMLCore
             return error(`Infinite string since ${contexts.string.line}:${contexts.string.pos}`);
         else if(isParam > 0)
             return error(`Infinite params since ${contexts.params.line}:${contexts.params.pos}`);
+        else if(codeLevel > 0)
+            return error(`Infinite code since ${contexts.code.line}:${contexts.code.pos}`);
 
         if(!wasTag && content.tag !== '')
             content.prev += content.tag, content.tag = '';
             
         return success(content, properties, contexts, first);
+    }
+
+    static compileAsync(source, properties = {}, context = {pos: 0, line: 1}, first = true)
+    {
+        return new Promise((resolve, reject) => {
+            let compiled = TinyMLCore.compile(source, properties, context, first)
+
+            if(compiled.success)
+                resolve(compiled.content);
+            else
+                reject(compiled.description);
+        });
     }
 
     static #selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
