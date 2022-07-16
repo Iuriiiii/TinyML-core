@@ -2,6 +2,24 @@
 
 TinyML Core is a little, faster and lightweight module that will help you to parse the source code of TinyML.
 
+## Usage
+
+You can use this module importing it directly into your code using the following CDN url.
+
+    https://cdn.jsdelivr.net/gh/Iuriiiii/TinyML-core@master/index.js
+
+Using the ECMAScript 6 standard:
+
+```js
+import TMLCore from 'https://cdn.jsdelivr.net/gh/Iuriiiii/TinyML-core@master/index.js';
+```
+
+Or as node package:
+
+```
+npm i https://github.com/Iuriiiii/TinyML-core
+```
+
 ## TinyML
 
 TinyML is a little markup language concept created to make the web design easier, faster and lightweight.
