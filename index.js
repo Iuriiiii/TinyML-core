@@ -23,6 +23,23 @@ SOFTWARE.
 */
 "use strict";
 
+/* https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript */
+function hashString(s)
+{
+    let hash = 0, i, chr;
+
+    if (s.length === 0)
+        return hash;
+
+    for(let i = 0; i < s.length; i++) {
+        chr   = s.charCodeAt(i);
+        hash  = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+
+    return hash;
+};
+
 export default class TinyMLCore
 {
     /**
@@ -85,13 +102,22 @@ export default class TinyMLCore
             line: line, position: position
         });
 
-        const getContentByPropertyFormat = (f, obj) => {
-            let m = f.split(f.includes('.') ? '.' : '>');
-    
+        const extract = (obj, expr, del = '>') =>
+        {
             if(typeof obj === 'function')
-                obj = obj(m, f) || {};
-            
-            return m.reduce((o, e) => o[e], obj);
+                obj = obj(expr);
+
+            if(typeof expr !== 'string' || typeof del !== 'string' || typeof obj !== 'object')
+                return undefined;
+                
+            return expr.split(del).reduce((acc, item) =>
+            {
+                if(typeof acc[item] === 'function')
+                    return acc[item]();
+                else
+                    return acc[item];
+        
+            }, obj);
         };
 
         const success = (source, contents, props, contexts, isFirst) =>
@@ -102,12 +128,22 @@ export default class TinyMLCore
                 res.push(contents.prev);
 
             if(contents.tag !== '')
+            {
+                let childs = TinyMLCore.compile(contents.code, props, contexts.code, false);
+                let srcHash = hashString(source);
+                let propValues = Object.values(content.properties);
+
                 res.push({
+                    srcHash: srcHash,
+                    fullHash: srcHash + hashString(propValues.join('')),
                     source: source,
                     tag: contents.tag,
-                    params: contents.params === '' ? undefined : contents.params,
-                    childs: TinyMLCore.compile(contents.code, props, contexts.code, false)
+                    params: contents.params,
+                    hasProps: propValues.length > 0,
+                    props: content.properties,
+                    childs: childs
                 });
+            }
 
             if(content.last.trim() !== '')
                 res.push(...TinyMLCore.compile(contents.last, props, contexts.last, false));
@@ -127,14 +163,13 @@ export default class TinyMLCore
             isString = !1,
             isComment = 0,
             contexts = {prev: {pos: context.pos, line: context.line}},
-            content = {tag:'', prev: '', code: '', last: '', property: '', properties: {raw: '', array: []}},
+            content = {tag:'', prev: '', code: '', last: '', property: '', properties: {}},
             line = context.line,
             wasTag = !1,
             pos = 1,
             i = 0,
             isProperty = !1,
-            splitted,
-            property = '';
+            splitted;
 
     f1: for(; i < chars.length; i++)
         {
@@ -202,11 +237,11 @@ export default class TinyMLCore
 
                     if((isProperty = !isProperty) === !1)
                     {
-                        content.properties.array.push(property);
-                        c = getContentByPropertyFormat(property, properties);
+                        c = content.properties[content.property] = extract(props, content.property);
+                        content.property = '';
                     }
-
-                    property = '';
+                    else
+                        contexts.property = {line: line, pos: pos};
                 break;
                 case c === '(':
                     if(codeLevel > 0 || content.tag === '')
@@ -295,6 +330,10 @@ export default class TinyMLCore
             return error(`Infinite params since `, contexts.params.line, contexts.params.pos);
         else if(codeLevel > 0)
             return error(`Infinite code since `, contexts.code.line, contexts.code.pos);
+        else if(isProperty)
+            return error(`Infinite extern property name since `, contexts.property.line, contexts.property.pos);
+        
+        delete content.property;
 
         if(!wasTag && content.tag !== '')
             content.prev += content.tag, content.tag = '';

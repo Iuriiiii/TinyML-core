@@ -1,0 +1,185 @@
+{
+    "success": true,
+    "content": [
+      {
+        "srcHash": -1985781992,
+        "fullHash": -1985781992,
+        "source": "\nheader{\n    nav{\n        a(href:\"#home\"){Home}\n        a(href:\"#about\"){About}\n        a(href:\"#examples\"){Examples}\n        a(href:\"#download\"){Downloads}\n    }\n}\nmain{   \n    @property@\n\n    section{\n        header{\n            h2{TinyML}\n        }\n        p{strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }\n        div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        }\n    }\n}\nfooter{\n    p{ strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} }\n}\n",
+        "tag": "header",
+        "props": {},
+        "childs": [
+          {
+            "srcHash": -1036478144,
+            "fullHash": -1036478144,
+            "source": "\n    nav{\n        a(href:\"#home\"){Home}\n        a(href:\"#about\"){About}\n        a(href:\"#examples\"){Examples}\n        a(href:\"#download\"){Downloads}\n    }\n",
+            "tag": "nav",
+            "props": {},
+            "childs": [
+              {
+                "srcHash": 510983441,
+                "fullHash": 510983441,
+                "source": "\n        a(href:\"#home\"){Home}\n        a(href:\"#about\"){About}\n        a(href:\"#examples\"){Examples}\n        a(href:\"#download\"){Downloads}\n    ",
+                "tag": "a",
+                "params": "href=\"#home\"",
+                "props": {},
+                "childs": [
+                  "Home"
+                ]
+              },
+              {
+                "srcHash": -1114751351,
+                "fullHash": -1114751351,
+                "source": "\n        a(href:\"#about\"){About}\n        a(href:\"#examples\"){Examples}\n        a(href:\"#download\"){Downloads}\n    ",
+                "tag": "a",
+                "params": "href=\"#about\"",
+                "props": {},
+                "childs": [
+                  "About"
+                ]
+              },
+              {
+                "srcHash": 2045559827,
+                "fullHash": 2045559827,
+                "source": "\n        a(href:\"#examples\"){Examples}\n        a(href:\"#download\"){Downloads}\n    ",
+                "tag": "a",
+                "params": "href=\"#examples\"",
+                "props": {},
+                "childs": [
+                  "Examples"
+                ]
+              },
+              {
+                "srcHash": -916873781,
+                "fullHash": -916873781,
+                "source": "\n        a(href:\"#download\"){Downloads}\n    ",
+                "tag": "a",
+                "params": "href=\"#download\"",
+                "props": {},
+                "childs": [
+                  "Downloads"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "srcHash": 1455243735,
+        "fullHash": 1455331119,
+        "source": "\nmain{   \n    @property@\n\n    section{\n        header{\n            h2{TinyML}\n        }\n        p{strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }\n        div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n          }\n    }\n}\nfooter{\n    p{ strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} }\n}\n",
+        "tag": "main",
+        "props": {
+          "property": "XXX"
+        },
+        "childs": [
+          "   \n    XXX\n\n    ",
+          {
+            "srcHash": -1735705755,
+            "fullHash": -1735705755,
+            "source": "   \n    XXX\n\n    section{\n        header{\n            h2{TinyML}\n        }\n        p{strong{TinyML}   it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }\n        div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        }\n    }\n",
+            "tag": "section",
+            "props": {},
+            "childs": [
+              {
+                "srcHash": 57125396,
+                "fullHash": 57125396,
+                "source": "\n        header{\n            h2{TinyML}\n        }\n        p{strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }\n          div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        }\n    ",
+                "tag": "header",
+                "props": {},
+                "childs": [
+                  {
+                    "srcHash": 370833875,
+                    "fullHash": 370833875,
+                    "source": "\n            h2{TinyML}\n        ",
+                    "tag": "h2",
+                    "props": {},
+                    "childs": [
+                      "TinyML"
+                    ]
+                  }
+                ]
+              },
+              {
+                "srcHash": 1403471002,
+                "fullHash": 1403471002,
+                "source": "\n        p{strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }\n        div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        }\n    ",
+                "tag": "p",
+                "props": {},
+                "childs": [
+                  {
+                    "srcHash": 1082481040,
+                    "fullHash": 1082481040,
+                    "source": "strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. ",
+                    "tag": "strong",
+                    "props": {},
+                    "childs": [
+                      "TinyML"
+                    ]
+                  },
+                  " it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. "
+                ]
+              },
+              {
+                "srcHash": 224671640,
+                "fullHash": 224671640,
+                "source": "\n        div{\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        }\n    ",
+                "tag": "div",
+                "props": {},
+                "childs": [
+                  {
+                    "srcHash": -556193089,
+                    "fullHash": -556193089,
+                    "source": "\n            label{Example I}textarea(readonly, title:\"TinyML example I\");\n        ",
+                    "tag": "label",
+                    "props": {},
+                    "childs": [
+                      "Example I"
+                    ]
+                  },
+                  {
+                    "srcHash": -2100600636,
+                    "fullHash": -2100600636,
+                    "source": "textarea(readonly, title:\"TinyML example I\");\n        ",
+                    "tag": "textarea",
+                    "params": "readonly title=\"TinyML example I\"",
+                    "props": {},
+                    "childs": [
+                      ""
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "srcHash": -1739764176,
+        "fullHash": -1739764176,
+        "source": "\nfooter{\n    p{ strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} }\n}\n",
+        "tag": "footer",
+        "props": {},
+        "childs": [
+          {
+            "srcHash": -1525566727,
+            "fullHash": -1525566727,
+            "source": "\n    p{ strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} }\n",
+            "tag": "p",
+            "props": {},
+            "childs": [
+              {
+                "srcHash": 217004727,
+                "fullHash": 217004727,
+                "source": " strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} ",
+                "tag": "strong",
+                "props": {},
+                "childs": [
+                  "Copyright &copy; 2022 Oscar Alexander Casas & contributors"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }

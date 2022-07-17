@@ -1,0 +1,24 @@
+header{
+    nav{
+        a(href:"#home"){Home}
+        a(href:"#about"){About}
+        a(href:"#examples"){Examples}
+        a(href:"#download"){Downloads}
+    }
+}
+main{   
+    @property@
+
+    section{
+        header{
+            h2{TinyML}
+        }
+        p{strong{TinyML} it's a simple, fast, lightweidth, flexible and robust markup language concept that can be used to web page layout or rational data structuring. }
+        div{
+            label{Example I}textarea(readonly, title:"TinyML example I");
+        }
+    }
+}
+footer{
+    p{ strong{Copyright &copy; 2022 Oscar Alexander Casas & contributors} }
+}
