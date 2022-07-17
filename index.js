@@ -40,11 +40,12 @@ function hashString(s)
     return hash;
 };
 
-
+const selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
+const toParams = params => (params || '')  === '' ? '' : ` ${params}`;
 
 function htmlCompilator()
 {
-
+    
 }
 
 function compile(props, compilator = htmlCompilator)
