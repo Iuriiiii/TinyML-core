@@ -40,6 +40,18 @@ function hashString(s)
     return hash;
 };
 
+
+
+function htmlCompilator()
+{
+
+}
+
+function compile(props, compilator = htmlCompilator)
+{
+    return compilator.call(this, props);
+}
+
 export default class TinyMLCore
 {
     /**
@@ -129,7 +141,6 @@ export default class TinyMLCore
 
             if(contents.tag !== '')
             {
-                let childs = TinyMLCore.compile(contents.code, props, contexts.code, false);
                 let srcHash = hashString(source);
                 let propValues = Object.values(content.properties);
 
@@ -141,7 +152,8 @@ export default class TinyMLCore
                     params: contents.params,
                     hasProps: propValues.length > 0,
                     props: content.properties,
-                    childs: childs
+                    childs: TinyMLCore.compile(contents.code, props, contexts.code, false),
+                    compile: compile
                 });
             }
 

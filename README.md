@@ -35,7 +35,7 @@ The best way to learn somethig as easy as TinyML is trough examples and comparis
 
 The default syntax of a tag on TinyML is the following:
 
-> tag<b>[</b>(<b>[</b>...<b>]</b>)<b>]</b>{<b>[</b>...<b>]</b>}
+> tag<b>[</b>( <b>[</b>parameters<b>]</b> )<b>]</b><b>(</b>{<b>[</b>code<b>]</b>}<b>|</b>;<b>)</b>
 
 Supposing what you want to write a self-close tag without content, you can do:
 
@@ -45,7 +45,17 @@ or
 
 > meta(){}
 
-a tag is considerate as one just if it's followed by a bracket `{`.
+a tag is considerate as one just if it's followed by a bracket `{` or `(...);`.
+
+> thisIsATag{}
+> thisIsATagToo();
+> thisAlsoIsATag(){ this is the content of the tag }
+> thisIsATagWithoutContentButWithParams(param1="Hi, i am a param");
+> 
+>
+> thisIsNotATag {}
+> thisIsNotATagNeither ();
+> nopeThisIsNotATag;
 
 <table>
 <tr>
@@ -77,7 +87,7 @@ a tag is considerate as one just if it's followed by a bracket `{`.
 <td>
 
 ```
-html5(lang="en"){
+html(lang="en"){
     head{
         title{The page title}
     }
