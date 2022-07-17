@@ -58,17 +58,18 @@ export default class TinyMLCore
      * {String} params - The attributes setted in the tag.
      * {Array} childs - The child elements of this element.
      */
-    static compile(source, properties = {}, context = {pos: 0, line: 1}, first = true)
+    static compile(source, props = {}, context = {pos: 0, line: 1}, first = true)
     {
         if(typeof source === 'object')
         {
             if(!('source' in source)) return [];
             if('context' in source) context = source.context;
-            if('properties' in source) properties = source.properties;
+            if('props' in source) props = source.props;
 
             source = source.source;
         }
-        else if(typeof source !== 'string')
+        
+        if(typeof source !== 'string')
             return [];
 
         if(source.trim().length < 2)
@@ -78,7 +79,12 @@ export default class TinyMLCore
             return [source.slice(1, -1)];
 
         const isSpace = char => ' \f\n\r\t\v'.includes(char);
-        const error = desc => ({success: false, description: desc});
+        const error = (description, line, position) => ({
+            success: false,
+            description: `${description}${line}:${position}`,
+            line: line, position: position
+        });
+
         const getContentByPropertyFormat = (f, obj) => {
             let m = f.split(f.includes('.') ? '.' : '>');
     
@@ -88,7 +94,7 @@ export default class TinyMLCore
             return m.reduce((o, e) => o[e], obj);
         };
 
-        function success(contents, properties, contexts, isFirst)
+        const success = (source, contents, props, contexts, isFirst) =>
         {
             let res = [];
 
@@ -96,13 +102,21 @@ export default class TinyMLCore
                 res.push(contents.prev);
 
             if(contents.tag !== '')
-                res.push({tag: contents.tag, params: contents.params === '' ? undefined : contents.params, childs: TinyMLCore.compile(contents.code, properties, contexts.code, false)});
+                res.push({
+                    source: source,
+                    tag: contents.tag,
+                    params: contents.params === '' ? undefined : contents.params,
+                    childs: TinyMLCore.compile(contents.code, props, contexts.code, false)
+                });
 
             if(content.last.trim() !== '')
-                res.push(...TinyMLCore.compile(contents.last, properties, contexts.last, false));
+                res.push(...TinyMLCore.compile(contents.last, props, contexts.last, false));
 
             if(isFirst)
-                res = {success: true, content: [...res]};
+                res = {
+                    success: true,
+                    content: [...res]
+                };
 
             return res;
         }
@@ -113,19 +127,20 @@ export default class TinyMLCore
             isString = !1,
             isComment = 0,
             contexts = {prev: {pos: context.pos, line: context.line}},
-            content = {tag:'', prev: '', code: '', last: '', property: ''},
+            content = {tag:'', prev: '', code: '', last: '', property: '', properties: {raw: '', array: []}},
             line = context.line,
             wasTag = !1,
             pos = 1,
             i = 0,
             isProperty = !1,
-            splitted;
+            splitted,
+            property = '';
 
     f1: for(; i < chars.length; i++)
         {
             let c = chars[i];
             
-            switch(true)
+            switch(!0)
             {
                 case c === '[':
                     isComment++;
@@ -182,23 +197,26 @@ export default class TinyMLCore
 
                     content.prev += content.tag + c, content.tag = '', c = '';
                 break;
-                case c === '%':
+                case c === '@':
                     c = '';
 
                     if((isProperty = !isProperty) === !1)
-                        c = getContentByPropertyFormat(content.property, properties);
+                    {
+                        content.properties.array.push(property);
+                        c = getContentByPropertyFormat(property, properties);
+                    }
 
-                    content.property = '';
+                    property = '';
                 break;
                 case c === '(':
                     if(codeLevel > 0 || content.tag === '')
                         break;
                     
                     if(isParam > 0)
-                        return error(`Invalid use of '(' at ${line}:${pos}`);
+                        return error(`Invalid use of '(' at `, line, pos);
 
                     if('params' in content)
-                        return error(`Duplicate use of '(' at ${line}:${pos}`);
+                        return error(`Duplicate use of '(' at `, line, pos);
 
                     contexts.params = {pos: pos, line: line};
                     isParam++;
@@ -222,7 +240,7 @@ export default class TinyMLCore
                 break;
                 case c === '{':
                     if(content.tag === '')
-                        return error(`Tag expected at ${line}:${pos}`);
+                        return error(`Tag expected at `, line, pos);
                     
                     contexts.code = {pos: i+1, line: line};
 
@@ -237,7 +255,7 @@ export default class TinyMLCore
                 break;
                 case c === '}':
                     if(--codeLevel < 0)
-                        return error(`Invalid code closure at ${line}:${pos}`);
+                        return error(`Invalid code closure at `, line, pos);
                     
                     if(codeLevel > 0)
                         break;
@@ -252,7 +270,7 @@ export default class TinyMLCore
                     {
                         case '[':
                         case ']':
-                        case '%':
+                        case '@':
                         case '}':
                         case '{':
                             if(codeLevel > 0)
@@ -270,133 +288,30 @@ export default class TinyMLCore
         }
 
         if(isComment > 0)
-            return error(`Infinite comment since ${contexts.comment.line}:${contexts.comment.pos}`);
+            return error(`Infinite comment since `, contexts.comment.line, contexts.comment.pos);
         else if(isString)
-            return error(`Infinite string since ${contexts.string.line}:${contexts.string.pos}`);
+            return error(`Infinite string since `, contexts.string.line, contexts.string.pos);
         else if(isParam > 0)
-            return error(`Infinite params since ${contexts.params.line}:${contexts.params.pos}`);
+            return error(`Infinite params since `, contexts.params.line, contexts.params.pos);
         else if(codeLevel > 0)
-            return error(`Infinite code since ${contexts.code.line}:${contexts.code.pos}`);
+            return error(`Infinite code since `, contexts.code.line, contexts.code.pos);
 
         if(!wasTag && content.tag !== '')
             content.prev += content.tag, content.tag = '';
             
-        return success(content, properties, contexts, first);
+        return success(source, content, props, contexts, first);
     }
 
-    static compileAsync(source, properties = {}, context = {pos: 0, line: 1}, first = true)
+    static compileAsync(source, props = {}, context = {pos: 0, line: 1}, first = true)
     {
         return new Promise((resolve, reject) => {
-            let compiled = TinyMLCore.compile(source, properties, context, first)
+            let compiled = TinyMLCore.compile(source, props, context, first)
 
             if(compiled.success)
                 resolve(compiled.content);
             else
                 reject(compiled.description);
         });
-    }
-
-    static #selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
-    static toParams = (params) => (params || '')  === '' ? '' : ` ${params}`;
-    static #langs = {html: (obj) =>
-        {
-            if(typeof obj === 'string')
-                return obj.replaceAll('\\n','<br>');
-        
-            let params = TinyMLCore.toParams(obj.params);
-        
-            if(TinyMLCore.#selfCloseTags.includes(obj.tag))
-                return `<${obj.tag}${params}/>`;
-        
-            let source;
-
-            switch(obj.tag)
-            {
-                case 'html5': obj.tag = 'html', source = `<!DOCTYPE html><html${params}>`;
-                break;
-                default: source = `<${obj.tag}${params}>`;
-            }
-            
-            obj.childs.forEach(e => {
-                source += TinyMLCore.#langs.html(e);
-            });
-        
-            return `${source}</${obj.tag}>`;
-        }
-    };
-
-    /**
-     *  * Traduces TinyML's source code to HTML's source code.
-     * 
-     * @param {String} source - The TinyML's source code.
-     * @param {Object|String} properties 
-     * @param {String} [lang=html] - The lang to translate.
-     * @returns {Object}
-     * 
-     * The return will be an object with a boolean member called 'success'
-     * with the status of the translation and other one called 'content'
-     * containing the translation as a string.
-     * 
-     * Example I:
-     *  {success: true, content: '<html><h1>Hello World</h1></html>'}
-     * 
-     */
-    static translate(source, properties = {}, lang = 'html')
-    {
-        if(typeof properties === 'string')
-            lang = properties, properties = {};
-
-        let compiled = TinyMLCore.compile(source, properties);
-
-        if(!compiled.success)
-            return compiled;
-
-        let langs = TinyMLCore.#langs;
-
-        if(!(lang in langs))
-            return {success: false, description: 'The translate lang doesn\'t exists'};
-
-        return {success: true, content: compiled.content.reduce((generated, element, index, array) => {
-            return generated += langs[lang](element, index, array);
-        }, '')};
-    }
-
-    /**
-     * Gets or sets a lang engine.
-     * 
-     * @param {String} lang
-     * @param {Function|Null} [callback]
-     * 
-     * If just the first param is set, the engine function of the lang will be returned,
-     * otherwise, all the langs will be returned with their respective engine functions.
-     * If the first param is set and the second one is a function, the engine function
-     * will be set on the lang.
-     * If the first param is set and the second one is null, the actual engine function
-     * of the lang will be deleted.
-     * 
-     */
-    static langEngine(lang, callback)
-    {
-        let langs = TinyMLCore.#langs;
-
-        switch(typeof lang)
-        {
-            case 'undefined': return langs;
-            case 'string':
-                if(callback === null)
-                {
-                    delete langs[lang];
-                    return;
-                }
-            
-                switch(typeof callback)
-                {
-                    case 'undefined': return langs[lang];
-                    case 'function': langs[lang] = callback;
-                    default: return;
-                }
-            default: return;
-        }
     }
 }
 
