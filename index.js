@@ -77,8 +77,8 @@ export default class TinyMLCore
         if(source.startsWith('!') && source.endsWith('!'))
             return [source.slice(1, -1)];
 
-        const isSpace = (c) => ' \f\n\r\t\v'.includes(c);
-        const error = (d) => ({success: false, description: d});
+        const isSpace = char => ' \f\n\r\t\v'.includes(char);
+        const error = desc => ({success: false, description: desc});
         const getContentByPropertyFormat = (f, obj) => {
             let m = f.split(f.includes('.') ? '.' : '>');
     
@@ -144,16 +144,16 @@ export default class TinyMLCore
                         c = ''
 
                 break;
-                case c === '"':
-                    if(isString = !isString)
-                        contexts.string = {pos: pos, line: line};
-
-                break;
                 case isComment > 0:
                     if(codeLevel === 0)
                         c = ''
 
                     break;
+                case c === '"':
+                    if(isString = !isString)
+                        contexts.string = {pos: pos, line: line};
+
+                break;
                 case isString:
                 break;
                 case c === ';':
