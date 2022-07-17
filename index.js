@@ -314,6 +314,3 @@ export default class TinyMLCore
         });
     }
 }
-
-if(typeof module !== 'undefined')
-    module.exports = TinyMLCore;
