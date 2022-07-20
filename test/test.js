@@ -77,6 +77,7 @@ describe('Tags', () =>
     {
         it('Tag should be equals to \'div\'', () =>
         {
+            // console.log(JSON.stringify(TinyMLCore.compile('html{div{Hola Mundo}}'), undefined, '  '));
             assert.equal(TinyMLCore.compile('html{div{Hola Mundo}}').content[0].childs[0].tag, 'div');
         });
     });
@@ -93,6 +94,8 @@ describe('Tags', () =>
     {
         it('The tag after \'meta\' should be parsed correctly', () =>
         {
+            // console.log(JSON.stringify(obj, undefined, '  '));
+            // console.log(obj.content[0].childs[1]);
             assert.equal(TinyMLCore.compile('html{meta();div{Hola Mundo}}').content[0].childs[1].tag, 'div');
         });
     });
@@ -117,7 +120,7 @@ describe('Tags', () =>
     {
         it('The \'strong\' tag content next to \'p\' content must be parsed correctly', () =>
         {
-            assert.equal(TinyMLCore.compile('p{Hola, esto de;strong{be}ría ser un buen texto}').content[0].childs[1].childs[0], 'be');
+            assert.equal(TinyMLCore.compile('p{Hola, esto de;strong{be}ría ser un buen texto}').content[0].childs[1].childs[0].content, 'be');
         });
     });
 });
@@ -139,7 +142,7 @@ describe('Content', () =>
     {
         it('it should be equals to \'Hola Mundo\'', () =>
         {
-            assert.equal(TinyMLCore.compile('html{div{Hola Mundo}}').content[0].childs[0].childs[0], 'Hola Mundo');
+            assert.equal(TinyMLCore.compile('html{div{Hola Mundo}}').content[0].childs[0].childs[0].content, 'Hola Mundo');
         });
     });
 });
@@ -158,7 +161,7 @@ describe('Properties', () =>
     {
         it('Property \'@tag@\' should be equals parsed correctly as a tag', () =>
         {
-            assert.equal(TinyMLCore.compile('html{@tag@{Hola Mundo}}', {tag: 'h1'}).content[0].childs[0].childs[0], 'Hola Mundo');
+            assert.equal(TinyMLCore.compile('html{@tag@{Hola Mundo}}', {tag: 'h1'}).content[0].childs[0].childs[0].content, 'Hola Mundo');
         });
     });
 
@@ -166,7 +169,7 @@ describe('Properties', () =>
     {
         it('Property \'@tag@\' should be \'h1\' with function argument', () =>
         {
-            assert.equal(TinyMLCore.compile('html{@tag@{Hola Mundo}}', () => {tag: 'h1'}).content[0].childs[0].childs[0], 'Hola Mundo');
+            assert.equal(TinyMLCore.compile('html{@tag@{Hola Mundo}}', () => {tag: 'h1'}).content[0].childs[0].childs[0].content, 'Hola Mundo');
         });
     });
 
@@ -193,6 +196,18 @@ describe('Properties', () =>
         it('The \'member\' param of the property callback should be \'Hi\'', () =>
         {
             assert.equal(TinyMLCore.compile('@Hi@{}', (member) => ({[member]: member})).content[0].tag, 'Hi');
+        });
+    });
+});
+
+describe('Compilation', () =>
+{
+    describe('Compile I', () =>
+    {
+        it('Should return a correct HTML code.', () => 
+        {
+            // console.log(TinyMLCore.compile('html{}').content[0].compile());
+            // console.log(TinyMLCore.compile(''));
         });
     });
 });

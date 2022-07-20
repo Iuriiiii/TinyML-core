@@ -43,9 +43,33 @@ function hashString(s)
 const selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
 const toParams = params => (params || '')  === '' ? '' : ` ${params}`;
 
-function htmlCompilator()
+function htmlCompilator(props)
 {
-    
+    console.log(this);
+    if(this.type === 'raw')
+        return this.content;
+
+    let params = toParams(this.params);
+
+    if(selfCloseTags.includes(this.tag))
+        return `<${this.tag}${params}/>`;
+
+    // console.log('childs:', this.childs);
+
+    // if(this.childs.length === 0)
+    //     return `<${this.tag}${params}></${this.tag}>`;
+
+    let content = this.childs.reduce((acc, val) =>
+    {
+        // console.log(val);
+        // console.log(acc, val)
+        // if(val.compile === undefined)
+        //     console.log(val);
+        
+        return acc += val.compile(props);
+    }, '');
+
+    return `<${this.tag}${params}>${content}</${this.tag}>`;
 }
 
 function compile(props, compilator = htmlCompilator)
@@ -53,8 +77,83 @@ function compile(props, compilator = htmlCompilator)
     return compilator.call(this, props);
 }
 
+function extract(obj, expr, del = '>')
+{
+    if(typeof obj === 'function')
+        obj = obj(expr);
+
+    if(typeof expr !== 'string' || typeof del !== 'string' || typeof obj !== 'object')
+        return undefined;
+        
+    return expr.split(del).reduce((acc, item) =>
+    {
+        if(typeof acc[item] === 'function')
+            return acc[item]();
+        else
+            return acc[item];
+
+    }, obj);
+}
+
+function isSpace(char)
+{
+    return ' \f\n\r\t\v'.includes(char);
+}
+
 export default class TinyMLCore
 {
+    static #error(description, line, position)
+    {
+        return {
+            success: false,
+            description: `${description}${line}:${position}`,
+            line: line,
+            position: position
+        };
+    };
+    
+    static #success(source, contents, props, contexts, isFirst)
+    {
+        let res = [];
+    
+        if(contents.prev.trim() !== '')
+            res.push({
+                type: 'raw',
+                content: contents.prev,
+                compile: compile
+            });
+    
+        if(contents.tag !== '')
+        {
+            let srcHash = hashString(source);
+            let propValues = Object.values(contents.properties);
+    
+            res.push({
+                type: 'tag',
+                srcHash: srcHash,
+                fullHash: srcHash + hashString(propValues.join('')),
+                source: source,
+                tag: contents.tag,
+                params: contents.params,
+                hasProps: propValues.length > 0,
+                props: contents.properties,
+                childs: TinyMLCore.#internalCompile.call({context: contexts.code, first: true}, contents.code, props).content,
+                compile: compile
+            });
+        }
+    
+        if(contents.last.trim() !== '')
+            res.push(...TinyMLCore.#internalCompile.call({context: contexts.last, first: true}, contents.last, props).content);
+    
+        if(isFirst)
+            res = {
+                success: true,
+                content: [...res]
+            };
+    
+        return res;
+    }
+
     /**
      * Parses the TinyML's source code and return an object from it.
      * 
@@ -88,96 +187,34 @@ export default class TinyMLCore
      * {String} params - The attributes setted in the tag.
      * {Array} childs - The child elements of this element.
      */
-    static compile(source, props = {}, context = {pos: 0, line: 1}, first = true)
+    static #internalCompile(source, props = {})
     {
         if(typeof source === 'object')
         {
             if(!('source' in source)) return [];
-            if('context' in source) context = source.context;
+            if('context' in source) this.context = source.context;
             if('props' in source) props = source.props;
 
             source = source.source;
         }
         
         if(typeof source !== 'string')
-            return [];
+            source = '';
 
         if(source.trim().length < 2)
-            return [source];
+            return {success: true, content: [{type: 'raw', content: source, compile: compile}]};
 
         if(source.startsWith('!') && source.endsWith('!'))
-            return [source.slice(1, -1)];
-
-        const isSpace = char => ' \f\n\r\t\v'.includes(char);
-        const error = (description, line, position) => ({
-            success: false,
-            description: `${description}${line}:${position}`,
-            line: line, position: position
-        });
-
-        const extract = (obj, expr, del = '>') =>
-        {
-            if(typeof obj === 'function')
-                obj = obj(expr);
-
-            if(typeof expr !== 'string' || typeof del !== 'string' || typeof obj !== 'object')
-                return undefined;
-                
-            return expr.split(del).reduce((acc, item) =>
-            {
-                if(typeof acc[item] === 'function')
-                    return acc[item]();
-                else
-                    return acc[item];
-        
-            }, obj);
-        };
-
-        const success = (source, contents, props, contexts, isFirst) =>
-        {
-            let res = [];
-
-            if(contents.prev.trim() !== '')
-                res.push(contents.prev);
-
-            if(contents.tag !== '')
-            {
-                let srcHash = hashString(source);
-                let propValues = Object.values(content.properties);
-
-                res.push({
-                    srcHash: srcHash,
-                    fullHash: srcHash + hashString(propValues.join('')),
-                    source: source,
-                    tag: contents.tag,
-                    params: contents.params,
-                    hasProps: propValues.length > 0,
-                    props: content.properties,
-                    childs: TinyMLCore.compile(contents.code, props, contexts.code, false),
-                    compile: compile
-                });
-            }
-
-            if(content.last.trim() !== '')
-                res.push(...TinyMLCore.compile(contents.last, props, contexts.last, false));
-
-            if(isFirst)
-                res = {
-                    success: true,
-                    content: [...res]
-                };
-
-            return res;
-        }
+            return {success: true, content: [{type: 'raw', content: source.slice(1, -1), compile: compile}]};
 
         let chars = source.split(''),
             isParam = 0,
             codeLevel = 0,
             isString = !1,
             isComment = 0,
-            contexts = {prev: {pos: context.pos, line: context.line}},
+            contexts = {prev: {pos: this.context.pos, line: this.context.line}},
             content = {tag:'', prev: '', code: '', last: '', property: '', properties: {}},
-            line = context.line,
+            line = this.context.line,
             wasTag = !1,
             pos = 1,
             i = 0,
@@ -261,10 +298,10 @@ export default class TinyMLCore
                         break;
                     
                     if(isParam > 0)
-                        return error(`Invalid use of '(' at `, line, pos);
+                        return TinyMLCore.#error(`Invalid use of '(' at `, line, pos);
 
                     if('params' in content)
-                        return error(`Duplicate use of '(' at `, line, pos);
+                        return TinyMLCore.#error(`Duplicate use of '(' at `, line, pos);
 
                     contexts.params = {pos: pos, line: line};
                     isParam++;
@@ -288,7 +325,7 @@ export default class TinyMLCore
                 break;
                 case c === '{':
                     if(content.tag === '')
-                        return error(`Tag expected at `, line, pos);
+                        return TinyMLCore.#error(`Tag expected at `, line, pos);
                     
                     contexts.code = {pos: i+1, line: line};
 
@@ -303,7 +340,7 @@ export default class TinyMLCore
                 break;
                 case c === '}':
                     if(--codeLevel < 0)
-                        return error(`Invalid code closure at `, line, pos);
+                        return TinyMLCore.#error(`Invalid code closure at `, line, pos);
                     
                     if(codeLevel > 0)
                         break;
@@ -336,28 +373,34 @@ export default class TinyMLCore
         }
 
         if(isComment > 0)
-            return error(`Infinite comment since `, contexts.comment.line, contexts.comment.pos);
+            return TinyMLCore.#error(`Infinite comment since `, contexts.comment.line, contexts.comment.pos);
         else if(isString)
-            return error(`Infinite string since `, contexts.string.line, contexts.string.pos);
+            return TinyMLCore.#error(`Infinite string since `, contexts.string.line, contexts.string.pos);
         else if(isParam > 0)
-            return error(`Infinite params since `, contexts.params.line, contexts.params.pos);
+            return TinyMLCore.#error(`Infinite params since `, contexts.params.line, contexts.params.pos);
         else if(codeLevel > 0)
-            return error(`Infinite code since `, contexts.code.line, contexts.code.pos);
+            return TinyMLCore.#error(`Infinite code since `, contexts.code.line, contexts.code.pos);
         else if(isProperty)
-            return error(`Infinite extern property name since `, contexts.property.line, contexts.property.pos);
+            return TinyMLCore.#error(`Infinite extern property name since `, contexts.property.line, contexts.property.pos);
         
         delete content.property;
 
         if(!wasTag && content.tag !== '')
             content.prev += content.tag, content.tag = '';
             
-        return success(source, content, props, contexts, first);
+        return TinyMLCore.#success(source, content, props, contexts, this.first);
     }
 
-    static compileAsync(source, props = {}, context = {pos: 0, line: 1}, first = true)
+    static compile(source, props = {})
+    {
+        return TinyMLCore.#internalCompile.call({context: {pos: 0, line: 1}, first: true}, source, props);
+    }
+
+    // static compileAsync(source, props = {}, context = {pos: 0, line: 1}, first = true)
+    static compileAsync(source, props = {})
     {
         return new Promise((resolve, reject) => {
-            let compiled = TinyMLCore.compile(source, props, context, first)
+            let compiled = TinyMLCore.compile(source, props)
 
             if(compiled.success)
                 resolve(compiled.content);
