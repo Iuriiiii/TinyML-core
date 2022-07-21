@@ -144,7 +144,7 @@ export default class TinyMLCore
             TinyMLCore.#cache[source] = res = {
                 success: true,
                 content: [...res],
-                compile: function(props, compilator = htmlCompilator)
+                compile: function(props = {}, compilator = htmlCompilator)
                 {
                     switch(compilator())
                     {
