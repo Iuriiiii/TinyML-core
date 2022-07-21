@@ -11,7 +11,9 @@
   "author": "Oscar Alexander Casas",
   "files": [
     "index.js",
-    "test"
+    "test",
+    "translators",
+    "utils.js"
   ],
   "engines": {
     "node": ">=8"
