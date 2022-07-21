@@ -27,5 +27,8 @@ export default function translator(props)
         return acc += val.translate(props);
     }, '');
 
+    if(this.tag === '!')
+        return content;
+
     return `<${this.tag}${params}>${content}</${this.tag}>`;
 }
