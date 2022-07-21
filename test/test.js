@@ -63,6 +63,42 @@ describe('Return Object', () =>
 
 });
 
+describe('Raw content', () =>
+{
+    describe('Raw content I', () =>
+    {
+        it('Raw content is typed as \'raw\' correctly', () =>
+        {
+            let compiled = TinyMLCore.compile('this is the pervious raw content html{} this is the last raw content');
+
+            assert.equal(compiled.content[0].type, 'raw');
+            assert.equal(compiled.content[2].type, 'raw');
+        });
+    });
+
+    describe('Raw content II', () =>
+    {
+        it('The raw content should be parsed correctly', () =>
+        {
+            let compiled = TinyMLCore.compile('this is the pervious raw content html{} this is the last raw content');
+
+            assert.equal(compiled.content[0].content, 'this is the pervious raw content ');
+            assert.equal(compiled.content[2].content, ' this is the last raw content');
+        });
+    });
+
+    describe('Raw content III', () =>
+    {
+        it('Just raw content in the code', () =>
+        {
+            let raw = 'This example just contains raw content';
+            let compiled = TinyMLCore.compile(raw);
+
+            assert.equal(compiled.content[0].content, raw);
+        });
+    });
+});
+
 describe('Tags', () =>
 {
     describe('Tag I', () =>
@@ -204,10 +240,51 @@ describe('Compilation', () =>
 {
     describe('Compile I', () =>
     {
-        it('Should return a correct HTML code.', () => 
+        it('The first child element should return a little but correct HTML code.', () => 
         {
-            // console.log(TinyMLCore.compile('html{}').content[0].compile());
-            // console.log(TinyMLCore.compile(''));
+            assert.equal(TinyMLCore.compile('html{}').content[0].compile(), '<html></html>')
+        });
+    });
+
+    describe('Compile II', () =>
+    {
+        it('The first child element should return a correct raw content.', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{this is a raw content}').content[0].compile(), '<html>this is a raw content</html>')
+        });
+    });
+
+    describe('Compile III', () =>
+    {
+        it('The first child element should have its childs.', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{head{}body{}}').content[0].compile(), '<html><head></head><body></body></html>')
+        });
+    });
+
+    describe('Compile IV', () =>
+    {
+        it('The head tag should be contain a \'title\' tag.', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{head{title{}}body{}}').content[0].compile(), '<html><head><title></title></head><body></body></html>')
+        });
+
+        it('The \'title\' tag should contain a raw content', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{head{title{This is the raw content}}body{}}').content[0].compile(), '<html><head><title>This is the raw content</title></head><body></body></html>')
+        });
+    });
+
+    describe('Compile V', () =>
+    {
+        it('The self-close tag should be compiled correctly', () => 
+        {
+            assert.equal(TinyMLCore.compile('img(src="");').content[0].compile(), '<img src=""/>')
+        });
+
+        it('The self-close tag should ignore the content', () => 
+        {
+            assert.equal(TinyMLCore.compile('img(src=""){Hi ¿how are u?}').content[0].compile(), '<img src=""/>')
         });
     });
 });

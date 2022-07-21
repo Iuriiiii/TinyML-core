@@ -41,11 +41,12 @@ function hashString(s)
 };
 
 const selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
+const htmlTags = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdo', 'blockquote', 'body', 'html', 'head', 'title', 'button', 'form', 'cite', 'code', 'colgroup', 'command', 'strong', 'u', 'datalist', 'dd', 'table', 'th', 'tr', 'td', 'thead', 'tfoot', 'tbody', 'var', 'p', 'wbr', 'sup', 'sub', 'style', 'span', 'small', 'select', 'option', 'script', 'section', 'main', 'header', 'footer', 'samp', 's', 'ruby', 'rt', 'rp', 'q', 'progress', 'pre', 'output', 'optgroup', 'ol', 'li', 'ul', 'noscript', 'object', 'nav', 'meter', 'fieldset', 'legend', 'kbd', 'ins', 'iframe', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure', 'figcaption', 'em', 'dt', 'dl', 'div', 'details', 'dfn', 'del'];
 const toParams = params => (params || '')  === '' ? '' : ` ${params}`;
 
 function htmlCompilator(props)
 {
-    console.log(this);
+    // console.log(this);
     if(this.type === 'raw')
         return this.content;
 
@@ -54,18 +55,8 @@ function htmlCompilator(props)
     if(selfCloseTags.includes(this.tag))
         return `<${this.tag}${params}/>`;
 
-    // console.log('childs:', this.childs);
-
-    // if(this.childs.length === 0)
-    //     return `<${this.tag}${params}></${this.tag}>`;
-
     let content = this.childs.reduce((acc, val) =>
     {
-        // console.log(val);
-        // console.log(acc, val)
-        // if(val.compile === undefined)
-        //     console.log(val);
-        
         return acc += val.compile(props);
     }, '');
 
@@ -102,6 +93,8 @@ function isSpace(char)
 
 export default class TinyMLCore
 {
+    static #cache = {};
+     
     static #error(description, line, position)
     {
         return {
@@ -137,16 +130,16 @@ export default class TinyMLCore
                 params: contents.params,
                 hasProps: propValues.length > 0,
                 props: contents.properties,
-                childs: TinyMLCore.#internalCompile.call({context: contexts.code, first: true}, contents.code, props).content,
+                childs: TinyMLCore.#internalCompilator.call({context: contexts.code, first: true}, contents.code, props).content,
                 compile: compile
             });
         }
     
         if(contents.last.trim() !== '')
-            res.push(...TinyMLCore.#internalCompile.call({context: contexts.last, first: true}, contents.last, props).content);
+            res.push(...TinyMLCore.#internalCompilator.call({context: contexts.last, first: true}, contents.last, props).content);
     
         if(isFirst)
-            res = {
+            TinyMLCore.#cache[source] = res = {
                 success: true,
                 content: [...res]
             };
@@ -187,7 +180,7 @@ export default class TinyMLCore
      * {String} params - The attributes setted in the tag.
      * {Array} childs - The child elements of this element.
      */
-    static #internalCompile(source, props = {})
+    static #internalCompilator(source, props = {})
     {
         if(typeof source === 'object')
         {
@@ -200,6 +193,9 @@ export default class TinyMLCore
         
         if(typeof source !== 'string')
             source = '';
+
+        if(source in TinyMLCore.#cache)
+            return TinyMLCore.#cache[source];
 
         if(source.trim().length < 2)
             return {success: true, content: [{type: 'raw', content: source, compile: compile}]};
@@ -393,7 +389,7 @@ export default class TinyMLCore
 
     static compile(source, props = {})
     {
-        return TinyMLCore.#internalCompile.call({context: {pos: 0, line: 1}, first: true}, source, props);
+        return TinyMLCore.#internalCompilator.call({context: {pos: 0, line: 1}, first: true}, source, props);
     }
 
     // static compileAsync(source, props = {}, context = {pos: 0, line: 1}, first = true)
