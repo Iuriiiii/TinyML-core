@@ -293,4 +293,31 @@ describe('Compilation', () =>
             assert.equal(TinyMLCore.compile('img(src=""){Hi ¿how are u?}').content[0].translate(), '<img src=""/>')
         });
     });
+
+    describe('Compile VI', () =>
+    {
+        it('HTML tags should be escaped correctly', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{<Hola Mundo>}').translate().join(''),
+                        '<html>&lt;Hola Mundo&gt;</html>')
+        });
+
+        it('Anonymous tag should be work correctly', () => 
+        {
+            assert.equal(TinyMLCore.compile('!{<Hola Mundo>}').translate().join(''),
+                        '&lt;Hola Mundo&gt;')
+        });
+
+        it('Pure content should be work correctly I', () => 
+        {
+            assert.equal(TinyMLCore.compile('!{!<Hola Mundo>!}').translate().join(''),
+                        '<Hola Mundo>')
+        });
+
+        it('Pure content should be work correctly II', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{!<Hola Mundo>!}').translate().join(''),
+                        '<html><Hola Mundo></html>')
+        });
+    });
 });
