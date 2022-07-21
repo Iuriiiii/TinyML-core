@@ -40,7 +40,7 @@ describe('Return Object', () =>
     {
         it('Async shoud be correct, returning a tag', async () =>
         {
-            assert.ok((await TinyMLCore.compileAsync('html{}'))[0].tag);
+            assert.ok((await TinyMLCore.compileAsync('html{}')).content[0].tag);
         });
     });
 
@@ -242,13 +242,13 @@ describe('Compilation', () =>
     {
         it('The first child element should return a little but correct HTML code', () => 
         {
-            assert.equal(TinyMLCore.compile('html{}').content[0].compile(), '<html></html>')
+            assert.equal(TinyMLCore.compile('html{}').content[0].translate(), '<html></html>')
         });
 
         it('The compile method should return the correct HTML code', () => 
         {
-            assert.equal(TinyMLCore.compile('html{}').compile(), '<html></html>')
-            assert.equal(TinyMLCore.compile('html{}body{}').compile(), '<html></html><body></body>')
+            assert.equal(TinyMLCore.compile('html{}').translate(), '<html></html>')
+            assert.equal(TinyMLCore.compile('html{}body{}').translate().join(''), '<html></html><body></body>')
         });
     });
 
@@ -256,7 +256,7 @@ describe('Compilation', () =>
     {
         it('The first child element should return a correct raw content', () => 
         {
-            assert.equal(TinyMLCore.compile('html{this is a raw content}').content[0].compile(), '<html>this is a raw content</html>')
+            assert.equal(TinyMLCore.compile('html{this is a raw content}').content[0].translate(), '<html>this is a raw content</html>')
         });
     });
 
@@ -264,7 +264,7 @@ describe('Compilation', () =>
     {
         it('The first child element should have its childs', () => 
         {
-            assert.equal(TinyMLCore.compile('html{head{}body{}}').content[0].compile(), '<html><head></head><body></body></html>')
+            assert.equal(TinyMLCore.compile('html{head{}body{}}').content[0].translate(), '<html><head></head><body></body></html>')
         });
     });
 
@@ -272,12 +272,12 @@ describe('Compilation', () =>
     {
         it('The head tag should be contain a \'title\' tag', () => 
         {
-            assert.equal(TinyMLCore.compile('html{head{title{}}body{}}').content[0].compile(), '<html><head><title></title></head><body></body></html>')
+            assert.equal(TinyMLCore.compile('html{head{title{}}body{}}').content[0].translate(), '<html><head><title></title></head><body></body></html>')
         });
 
         it('The \'title\' tag should contain a raw content', () => 
         {
-            assert.equal(TinyMLCore.compile('html{head{title{This is the raw content}}body{}}').content[0].compile(), '<html><head><title>This is the raw content</title></head><body></body></html>')
+            assert.equal(TinyMLCore.compile('html{head{title{This is the raw content}}body{}}').content[0].translate(), '<html><head><title>This is the raw content</title></head><body></body></html>')
         });
     });
 
@@ -285,12 +285,12 @@ describe('Compilation', () =>
     {
         it('The self-close tag should be compiled correctly', () => 
         {
-            assert.equal(TinyMLCore.compile('img(src="");').content[0].compile(), '<img src=""/>')
+            assert.equal(TinyMLCore.compile('img(src="");').content[0].translate(), '<img src=""/>')
         });
 
         it('The self-close tag should ignore the content', () => 
         {
-            assert.equal(TinyMLCore.compile('img(src=""){Hi ¿how are u?}').content[0].compile(), '<img src=""/>')
+            assert.equal(TinyMLCore.compile('img(src=""){Hi ¿how are u?}').content[0].translate(), '<img src=""/>')
         });
     });
 });

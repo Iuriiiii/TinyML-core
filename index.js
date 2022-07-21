@@ -23,76 +23,13 @@ SOFTWARE.
 */
 "use strict";
 
-/* https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript */
-function hashString(s)
+import htmlTranslator from './translators/html.js';
+import {isSpace, extract, hashString} from './utils.js';
+
+function translate(props = {}, translator = htmlTranslator)
 {
-    let hash = 0, i, chr;
-
-    if (s.length === 0)
-        return hash;
-
-    for(let i = 0; i < s.length; i++) {
-        chr   = s.charCodeAt(i);
-        hash  = ((hash << 5) - hash) + chr;
-        hash |= 0; // Convert to 32bit integer
-    }
-
-    return hash;
-};
-
-const selfCloseTags = ['img', 'br', 'input', 'link', 'meta', 'area', 'source', 'base', 'col', 'option', 'embed', 'hr', 'param', 'track'];
-const htmlTags = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdo', 'blockquote', 'body', 'html', 'head', 'title', 'button', 'form', 'cite', 'code', 'colgroup', 'command', 'strong', 'u', 'datalist', 'dd', 'table', 'th', 'tr', 'td', 'thead', 'tfoot', 'tbody', 'var', 'p', 'wbr', 'sup', 'sub', 'style', 'span', 'small', 'select', 'option', 'script', 'section', 'main', 'header', 'footer', 'samp', 's', 'ruby', 'rt', 'rp', 'q', 'progress', 'pre', 'output', 'optgroup', 'ol', 'li', 'ul', 'noscript', 'object', 'nav', 'meter', 'fieldset', 'legend', 'kbd', 'ins', 'iframe', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'figure', 'figcaption', 'em', 'dt', 'dl', 'div', 'details', 'dfn', 'del'];
-const toParams = params => (params || '')  === '' ? '' : ` ${params}`;
-
-function htmlCompilator(props)
-{
-    if(typeof props === 'undefined')
-        return 'string';
-
-    if(this.type === 'raw')
-        return this.content;
-
-    let params = toParams(this.params);
-
-    if(selfCloseTags.includes(this.tag))
-        return `<${this.tag}${params}/>`;
-
-    let content = this.childs.reduce((acc, val) =>
-    {
-        return acc += val.compile(props);
-    }, '');
-
-    return `<${this.tag}${params}>${content}</${this.tag}>`;
+    return translator.call(this, props);
 }
-
-function compile(props, compilator = htmlCompilator)
-{
-    return compilator.call(this, props);
-}
-
-function extract(obj, expr, del = '>')
-{
-    if(typeof obj === 'function')
-        obj = obj(expr);
-
-    if(typeof expr !== 'string' || typeof del !== 'string' || typeof obj !== 'object')
-        return undefined;
-        
-    return expr.split(del).reduce((acc, item) =>
-    {
-        if(typeof acc[item] === 'function')
-            return acc[item]();
-        else
-            return acc[item];
-
-    }, obj);
-}
-
-function isSpace(char)
-{
-    return ' \f\n\r\t\v'.includes(char);
-}
-
 export default class TinyMLCore
 {
     static #cache = {};
@@ -115,7 +52,7 @@ export default class TinyMLCore
             res.push({
                 type: 'raw',
                 content: contents.prev,
-                compile: compile
+                translate: translate
             });
     
         if(contents.tag !== '')
@@ -133,7 +70,7 @@ export default class TinyMLCore
                 hasProps: propValues.length > 0,
                 props: contents.properties,
                 childs: TinyMLCore.#internalCompilator.call({context: contexts.code, first: true}, contents.code, props).content,
-                compile: compile
+                translate: translate
             });
         }
     
@@ -144,9 +81,9 @@ export default class TinyMLCore
             TinyMLCore.#cache[source] = res = {
                 success: true,
                 content: [...res],
-                compile: function(props = {}, compilator = htmlCompilator)
+                translate: function(props = {}, translator = htmlTranslator)
                 {
-                    return this.content.reduce((acc, child) => {acc.push(child.compile(props, compilator)); return acc}, []);
+                    return this.content.reduce((acc, child) => {acc.push(child.translate(props, translator)); return acc}, []);
                 }
             };
     
@@ -204,10 +141,10 @@ export default class TinyMLCore
             return TinyMLCore.#cache[source];
 
         if(source.trim().length < 2)
-            return {success: true, content: [{type: 'raw', content: source, compile: compile}]};
+            return {success: true, content: [{type: 'raw', content: source, translate: translate}]};
 
         if(source.startsWith('!') && source.endsWith('!'))
-            return {success: true, content: [{type: 'raw', content: source.slice(1, -1), compile: compile}]};
+            return {success: true, content: [{type: 'pure', content: source.slice(1, -1), translate: translate}]};
 
         let chars = source.split(''),
             isParam = 0,
