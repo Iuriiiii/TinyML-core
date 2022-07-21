@@ -141,7 +141,11 @@ export default class TinyMLCore
         if(isFirst)
             TinyMLCore.#cache[source] = res = {
                 success: true,
-                content: [...res]
+                content: [...res],
+                compile: function()
+                {
+                    return this.content.reduce((acc, child) => acc += child.compile(), '');
+                }
             };
     
         return res;

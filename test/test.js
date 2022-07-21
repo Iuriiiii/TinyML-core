@@ -240,15 +240,21 @@ describe('Compilation', () =>
 {
     describe('Compile I', () =>
     {
-        it('The first child element should return a little but correct HTML code.', () => 
+        it('The first child element should return a little but correct HTML code', () => 
         {
             assert.equal(TinyMLCore.compile('html{}').content[0].compile(), '<html></html>')
+        });
+
+        it('The compile method should return the correct HTML code', () => 
+        {
+            assert.equal(TinyMLCore.compile('html{}').compile(), '<html></html>')
+            assert.equal(TinyMLCore.compile('html{}body{}').compile(), '<html></html><body></body>')
         });
     });
 
     describe('Compile II', () =>
     {
-        it('The first child element should return a correct raw content.', () => 
+        it('The first child element should return a correct raw content', () => 
         {
             assert.equal(TinyMLCore.compile('html{this is a raw content}').content[0].compile(), '<html>this is a raw content</html>')
         });
@@ -256,7 +262,7 @@ describe('Compilation', () =>
 
     describe('Compile III', () =>
     {
-        it('The first child element should have its childs.', () => 
+        it('The first child element should have its childs', () => 
         {
             assert.equal(TinyMLCore.compile('html{head{}body{}}').content[0].compile(), '<html><head></head><body></body></html>')
         });
@@ -264,7 +270,7 @@ describe('Compilation', () =>
 
     describe('Compile IV', () =>
     {
-        it('The head tag should be contain a \'title\' tag.', () => 
+        it('The head tag should be contain a \'title\' tag', () => 
         {
             assert.equal(TinyMLCore.compile('html{head{title{}}body{}}').content[0].compile(), '<html><head><title></title></head><body></body></html>')
         });
