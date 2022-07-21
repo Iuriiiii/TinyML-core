@@ -401,7 +401,11 @@ export default class TinyMLCore
     {
         return new Promise((resolve, reject) => {
             let compiled = TinyMLCore.compile(source, props)
-            (compiled.success ? resolve : reject)(compiled);
+            
+            if(compiled.success)
+                resolve(compiled);
+            else
+                reject(compiled);
         });
     }
 }
