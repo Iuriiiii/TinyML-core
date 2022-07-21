@@ -46,7 +46,9 @@ const toParams = params => (params || '')  === '' ? '' : ` ${params}`;
 
 function htmlCompilator(props)
 {
-    // console.log(this);
+    if(typeof props === 'undefined')
+        return 'string';
+
     if(this.type === 'raw')
         return this.content;
 
@@ -142,9 +144,14 @@ export default class TinyMLCore
             TinyMLCore.#cache[source] = res = {
                 success: true,
                 content: [...res],
-                compile: function()
+                compile: function(props, compilator = htmlCompilator)
                 {
-                    return this.content.reduce((acc, child) => acc += child.compile(), '');
+                    switch(compilator())
+                    {
+                        case 'string': return this.content.reduce((acc, child) => acc += child.compile(props, compilator), '');
+                        case 'object': return this.content.reduce((acc, child) => {acc.push(child.compile(props, compilator)); return acc}, []);
+                        case 'number': return this.content.reduce((acc, child) => acc - child.compile(props, compilator), 0);
+                    }
                 }
             };
     
