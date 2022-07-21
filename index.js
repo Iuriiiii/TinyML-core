@@ -146,12 +146,7 @@ export default class TinyMLCore
                 content: [...res],
                 compile: function(props = {}, compilator = htmlCompilator)
                 {
-                    switch(compilator())
-                    {
-                        case 'string': return this.content.reduce((acc, child) => acc += child.compile(props, compilator), '');
-                        case 'object': return this.content.reduce((acc, child) => {acc.push(child.compile(props, compilator)); return acc}, []);
-                        case 'number': return this.content.reduce((acc, child) => acc - child.compile(props, compilator), 0);
-                    }
+                    return this.content.reduce((acc, child) => {acc.push(child.compile(props, compilator)); return acc}, []);
                 }
             };
     
