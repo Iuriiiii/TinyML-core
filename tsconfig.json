@@ -19,6 +19,7 @@
         "**/*.spec.ts"
     ],
     "files": [
-        "src/tokenizer/index.ts"
+        "src/core/index.ts",
+        "src/tokenizer/index.ts",
     ]
 }

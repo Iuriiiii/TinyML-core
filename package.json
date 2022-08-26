@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest ./tests/index.ts --notify",
-    "build:core": "tsc ./src/core/index.ts",
-    "dev:tokenizer": "tsc-watch ./src/tokenizer/index.ts -outDir ./ --onSuccess \"node ./src/tokenizer/index.js\"",
-    "dev:core": "tsc-watch ./src/core/index.ts -outDir ./ --onSuccess \"node ./src/core/index.js\""
+    "build:core": "tsc --project tsconfig.json",
+    "dev:tokenizer": "tsc-watch ./src/tokenizer/index.ts -outDir ./src/ --onSuccess \"node ./src/tokenizer/index.js\"",
+    "dev:core": "tsc-watch ./src/core/index.ts -outDir ./src/ --onSuccess \"node ./src/core/index.js\""
   },
   "keywords": [],
   "author": "",

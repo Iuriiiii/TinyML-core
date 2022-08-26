@@ -25,7 +25,7 @@ export namespace Tokenizer {
     }
 
     const spaces = ' \t\r\n' as const;
-    const separators = ':;[](){},.' as const;
+    const separators = '\\:;[](){},.' as const;
     const operators = '+-/*^%' as const;
     const numbers = '0123456789' as const;
     const characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ' as const;

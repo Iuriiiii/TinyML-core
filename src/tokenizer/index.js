@@ -15,7 +15,7 @@ exports.Tokenizer = void 0;
 var Tokenizer;
 (function (Tokenizer) {
     var spaces = ' \t\r\n';
-    var separators = ';[](){},.';
+    var separators = '\\:;[](){},.';
     var operators = '+-/*^%';
     var numbers = '0123456789';
     var characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ';

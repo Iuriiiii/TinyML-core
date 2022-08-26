@@ -1,6 +1,3 @@
-"use strict";
-exports.__esModule = true;
-var tokenizer_1 = require("../tokenizer");
 var Core;
 (function (Core) {
     var Element = /** @class */ (function () {
@@ -8,11 +5,9 @@ var Core;
             this.content = [];
             this.parent = parent;
         }
-        Element.prototype.declareParam = function (token) {
-            // this.params.values.push({ name: token.text, value: true });
-        };
-        Element.prototype.updateLastParam = function (value) {
-            // this.params.values.at(-1).value = value.text;
+        Element.prototype.toParam = function (token) {
+            this.params = this.params || { content: [], values: [] };
+            this.params.content.push(token);
         };
         Element.prototype.getLastContentElement = function () {
             return this.content.at(-1);
@@ -49,9 +44,9 @@ var Core;
     Core.Element = Element;
     function getLastIdentifierToken(tokens) {
         var i = tokens.length;
-        while (i-- && tokens[i].type === 1 /* Tokenizer.TokenType.space */)
+        while (i-- && tokens[i].type === Tokenizer.TokenType.space)
             ;
-        if (tokens[i].type !== 3 /* Tokenizer.TokenType.identifier */)
+        if (tokens[i].type !== Tokenizer.TokenType.identifier)
             return;
         return i;
     }
@@ -77,27 +72,17 @@ var Core;
         var _a;
         if (source.length === 0)
             return new Compilation(true, 'Source empty');
-        var tokens = tokenizer_1.Tokenizer.tokenizate(source), token;
+        var tokens = Tokenizer.tokenizate(source), token;
         var x = 0, y = 0, bra = [], cor = [], par = [];
         var element = new Element();
-        var waitingValue = false;
-        if (tokens[0].type === 9 /* Tokenizer.TokenType.eof */)
+        if (tokens[0].type === Tokenizer.TokenType.eof)
             return new Compilation(true, 'Source empty');
         f1: for (var i = 0; i < tokens.length; i++) {
             token = tokens[i];
             switch (true) {
-                case token.type === 9 /* Tokenizer.TokenType.eof */:
+                case token.type === Tokenizer.TokenType.eof:
                     break f1;
-                case par.length > 0:
-                    if (token.type === 3 /* Tokenizer.TokenType.identifier */)
-                        element.declareParam(token);
-                    else if (token.type === 2 /* Tokenizer.TokenType.string */) {
-                    }
-                    else if (token.type === 7 /* Tokenizer.TokenType.separator */ && token.text === ':' || token.type === 6 /* Tokenizer.TokenType.operator */ && token.text === '=') { }
-                    else
-                        return new Compilation(false, 'Invalid token type at', token.pos);
-                    break;
-                case token.type === 7 /* Tokenizer.TokenType.separator */:
+                case token.type === Tokenizer.TokenType.separator:
                     switch (token.text) {
                         case '{':
                             bra.push(token);
@@ -106,7 +91,6 @@ var Core;
                             break;
                         case '(':
                             par.push(token);
-                            element.params = { content: [], values: [] };
                             break;
                         case '[':
                             break;
@@ -126,8 +110,16 @@ var Core;
                             break;
                     }
                     break;
+                case cor.length > 0:
+                    break;
+                // case token.type === Tokenizer.TokenType.identifier:
+                //     element.toTag(token);
+                //     break;
                 default:
-                    element.toContent(token);
+                    if (par.length)
+                        ;
+                    else
+                        element.toContent(token);
             }
         }
         if (bra.length > 0)

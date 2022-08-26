@@ -10,9 +10,8 @@ namespace Core {
     }
 
     export interface IParameter {
-        [key: string]: string,
-        name: string,
-        value: string
+        name: Tokenizer.Token[],
+        value: Tokenizer.Token
     }
 
     export interface IElementParameters {
@@ -20,45 +19,64 @@ namespace Core {
         values: IParameter[]
     }
 
+    type TContent = (Tokenizer.Token[] | Element)[];
 
     export class Element implements IElement {
         parent: Element | undefined;
         tag: Tokenizer.Token | undefined;
         params: IElementParameters | undefined;
-        content: (Tokenizer.Token[] | Element)[] | undefined;
+        content: TContent = [];
 
         constructor(parent?: Element) {
             this.parent = parent;
         }
 
-        getLastContentElement(): Tokenizer.Token[] | Element | undefined {
-            return this.content?.at(-1);
+        declareParam(token: Tokenizer.Token): void {
+            // this.params.values.push({ name: token.text, value: true });
         }
 
-        toContent(token: Element): unknown;
-        toContent(token: Tokenizer.Token): unknown;
-        toContent(token: any): unknown {
+        updateLastParam(value: Tokenizer.Token): void {
+            // this.params.values.at(-1).value = value.text;
+        }
+
+        getLastContentElement(): Tokenizer.Token[] | Element | undefined {
+            return this.content.at(-1);
+        }
+
+        toContent(token: Element): void;
+        toContent(token: Tokenizer.Token): void;
+        toContent(token: any): void {
             let element = this.getLastContentElement();
-            this.content = this.content || [];
 
             if (token instanceof Element)
-                return this.content.push(token);
-
-            if (element instanceof Element)
+                this.content.push(token);
+            else if (element instanceof Element || element === undefined)
                 this.content.push([token]);
             else
-                (element as Tokenizer.Token[]).push(token);
+                element.push(token);
+
+            // console.log('this.content:', this.content, 'element:', element);
         }
 
         initializeContent() {
             this.content = this.content || [];
         }
 
-        toTag(tag: Tokenizer.Token | undefined): void {
-            if (this.tag)
-                this.toContent(this.tag);
+        canHasTag(): boolean {
+            let element = this.getLastContentElement();
+            // console.log(element);
 
-            this.tag = tag;
+            if (element instanceof Element || element === undefined)
+                return false;
+
+            let lastToken = getLastIdentifierToken(element);
+
+            if (lastToken === undefined)
+                return false;
+
+            this.tag = element.splice(lastToken, 1)[0];
+
+            return true;
         }
 
         hasTag(): boolean {
@@ -66,17 +84,19 @@ namespace Core {
         }
     }
 
-    function geLastToken(tokens: Tokenizer.Token[], i: number): Tokenizer.Token {
-        if (i === 0)
-            return tokens[0];
+    function getLastIdentifierToken(tokens: Tokenizer.Token[]): number | undefined {
+        let i = tokens.length;
 
         while (i-- && tokens[i].type === Tokenizer.TokenType.space);
 
-        return tokens[i];
+        if (tokens[i].type !== Tokenizer.TokenType.identifier)
+            return;
+
+        return i;
     }
 
     export class Compilation {
-        elements: Element[] | undefined;
+        content: TContent;
         isSuccess: boolean;
         description: string;
         errorPosition: Tokenizer.TokenPosition | undefined;
@@ -84,16 +104,20 @@ namespace Core {
         constructor(success: boolean, description: string, position?: Tokenizer.TokenPosition) {
             this.isSuccess = success;
 
-            if (position && description.endsWith('at'))
+            if (position && (description.endsWith('at') || description.endsWith('since')))
                 description += ` ${position.y}:${position.x}`;
 
             this.description = description;
             this.errorPosition = position;
         }
 
-        setElements(elements: Element[]): Compilation {
-            this.elements = elements;
+        setContent(content: TContent): Compilation {
+            this.content = content;
             return this;
+        }
+
+        toString(): string {
+            return JSON.stringify(this, undefined, '  ');
         }
     }
 
@@ -102,82 +126,90 @@ namespace Core {
             return new Compilation(true, 'Source empty');
 
         let tokens = Tokenizer.tokenizate(source), token: Tokenizer.Token;
-        let x = 0, y = 0, bra = 0, cor = 0, par = 0;
-        let result: Element[] = [];
+        let x = 0, y = 0, bra: Tokenizer.Token[] = [], cor: Tokenizer.Token[] = [], par: Tokenizer.Token[] = [];
         let element = new Element();
+        let waitingValue = false;
 
         if (tokens[0].type === Tokenizer.TokenType.eof)
             return new Compilation(true, 'Source empty');
 
-        for (let i = 0; i < tokens.length; i++) {
+        f1: for (let i = 0; i < tokens.length; i++) {
             token = tokens[i];
 
             switch (true) {
+                case token.type === Tokenizer.TokenType.eof:
+                    break f1;
+                case par.length > 0:
+                    if (token.type === Tokenizer.TokenType.identifier)
+                        element.declareParam(token);
+                    else if (token.type === Tokenizer.TokenType.string) {
+
+                    }
+                    else if (token.type === Tokenizer.TokenType.separator && token.text === ':' || token.type === Tokenizer.TokenType.operator && token.text === '=') { }
+                    else
+                        return new Compilation(false, 'Invalid token type at', token.pos);
+
+                    break;
                 case token.type === Tokenizer.TokenType.separator:
                     switch (token.text) {
                         case '{':
-                            bra++;
-
-                            if (element.hasTag())
-                                element.initializeContent();
-
+                            bra.push(token);
+                            element.canHasTag();
                             element = new Element(element);
+
                             break;
                         case '(':
+                            par.push(token);
+                            element.params = { content: [], values: [] };
+
                             break;
                         case '[':
                             break;
                         case '}':
-                            if (--bra < 0)
+                            if (bra.length === 0)
                                 return new Compilation(false, 'Invalid separator "}" at', token.pos);
 
-                            element = element.parent!;
+                            element.parent.toContent(element);
+                            [element.parent, element] = [undefined, element.parent];
+                            bra.pop();
+
                             break;
                         case ')':
+                            if (par.length === 0)
+                                return new Compilation(false, 'Invalid separator ")" at', token.pos);
+
+
+
+                            par.pop();
                             break;
                         case ']':
                             break;
                     }
 
-                    element.toTag(undefined);
-                    break;
-                case cor > 0:
-
-                    break;
-                case token.type === Tokenizer.TokenType.identifier:
-                    element.toTag(token);
-
                     break;
                 default:
-                    if (token.type !== Tokenizer.TokenType.space && token.type !== Tokenizer.TokenType.eol) { }
-                    else
-                        element.toTag(undefined);
-
-
+                    element.toContent(token);
             }
         }
 
-        return (new Compilation(true, 'Source compiled succefully')).setElements(result);
+        if (bra.length > 0)
+            return new Compilation(false, 'Infinite code block detected since', bra.at(-1).pos);
+        else if (par.length > 0)
+            return new Compilation(false, 'Infinite parameters block detected since', par.at(-1).pos);
+        else if (cor.length > 0)
+            return new Compilation(false, 'Infinite comment since', bra.at(-1).pos);
+
+        return (new Compilation(true, 'Source compiled succefully')).setContent(element.content);
     }
 
 }
 
-let source = `
-html {
-    head {
-        title{This is a simple title}
-    }
-    This is the first raw content that you should be able to read without problem
-
-    body {
-        [This is a comment]
-        main {
-            {<h1>This is title</h1>}
-        }
-    }
-
-    This is a raw content
+let source = ` a thisisaTag {
+    t html { q}
 }
 `;
 
-console.log('qwdqwd');
+let result = Core.compile(source).toString();
+
+
+console.log(result);
