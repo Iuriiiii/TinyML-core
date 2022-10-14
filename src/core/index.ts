@@ -10,8 +10,8 @@ namespace Core {
     }
 
     export interface IParameter {
-        name: Tokenizer.Token[],
-        value: Tokenizer.Token
+        name: Tokenizer.Token,
+        value: Tokenizer.Token | boolean
     }
 
     export interface IElementParameters {
@@ -31,8 +31,12 @@ namespace Core {
             this.parent = parent;
         }
 
+        toParamContent(token: Tokenizer.Token): void {
+            this.params.content.push(token);
+        }
+
         declareParam(token: Tokenizer.Token): void {
-            // this.params.values.push({ name: token.text, value: true });
+            this.params.values.push({ name: token, value: true });
         }
 
         updateLastParam(value: Tokenizer.Token): void {
@@ -125,7 +129,7 @@ namespace Core {
         if (source.length === 0)
             return new Compilation(true, 'Source empty');
 
-        let tokens = Tokenizer.tokenizate(source), token: Tokenizer.Token;
+        let tokens = Tokenizer.tokenizate(source, { separators: '[]{}()=;:', operators: '' }), token: Tokenizer.Token;
         let x = 0, y = 0, bra: Tokenizer.Token[] = [], cor: Tokenizer.Token[] = [], par: Tokenizer.Token[] = [];
         let element = new Element();
         let waitingValue = false;
@@ -139,17 +143,6 @@ namespace Core {
             switch (true) {
                 case token.type === Tokenizer.TokenType.eof:
                     break f1;
-                case par.length > 0:
-                    if (token.type === Tokenizer.TokenType.identifier)
-                        element.declareParam(token);
-                    else if (token.type === Tokenizer.TokenType.string) {
-
-                    }
-                    else if (token.type === Tokenizer.TokenType.separator && token.text === ':' || token.type === Tokenizer.TokenType.operator && token.text === '=') { }
-                    else
-                        return new Compilation(false, 'Invalid token type at', token.pos);
-
-                    break;
                 case token.type === Tokenizer.TokenType.separator:
                     switch (token.text) {
                         case '{':
@@ -187,6 +180,20 @@ namespace Core {
                     }
 
                     break;
+                case par.length > 0:
+                    if (!waitingValue)
+                        if (token.type !== Tokenizer.TokenType.identifier)
+                            return new Compilation(false, 'Invalid token type at', token.pos);
+                        else
+                            element.declareParam(token);
+                    else
+                        if (token.type !== Tokenizer.TokenType.string)
+                            return new Compilation(false, 'Invalid token type at', token.pos);
+                        else
+                            element.updateLastParam(token);
+
+
+                    break;
                 default:
                     element.toContent(token);
             }
@@ -204,7 +211,7 @@ namespace Core {
 
 }
 
-let source = ` a thisisaTag {
+let source = ` a thisisaTag(){
     t html { q}
 }
 `;

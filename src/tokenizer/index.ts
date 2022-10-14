@@ -26,7 +26,7 @@ export namespace Tokenizer {
 
     const spaces = ' \t\r\n' as const;
     const separators = '\\:;[](){},.' as const;
-    const operators = '+-/*^%' as const;
+    const operators = '+-/*^%=!' as const;
     const numbers = '0123456789' as const;
     const characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ' as const;
 
@@ -43,15 +43,15 @@ export namespace Tokenizer {
         return token;
     }
 
-    function charToType(char: string): TokenType {
+    function charToType(char: string, props: IProps): TokenType {
         let type = TokenType.unknown;
-
+        
         switch (true) {
             case numbers.includes(char): return TokenType.number;
-            case separators.includes(char): return TokenType.separator;
-            case operators.includes(char): return TokenType.operator;
+            case (props.separators || separators).includes(char): return TokenType.separator;
+            case (props.operators || operators).includes(char): return TokenType.operator;
             case characters.includes(char): return TokenType.identifier;
-            case spaces.includes(char):
+            case (props.spaces || spaces).includes(char):
                 if (char === '\n')
                     return TokenType.eol;
                 else
@@ -61,7 +61,13 @@ export namespace Tokenizer {
         return type;
     }
 
-    export function tokenizate(source: string): Token[] {
+    interface IProps {
+        spaces?: string
+        operators?: string
+        separators?: string
+    }
+
+    export function tokenizate(source: string, props: IProps = {spaces, operators, separators}): Token[] {
         let token: Token = { text: '', pos: { x: 1, y: 1 }, type: TokenType.eof };
         let result: Token[] = [];
         let pos: TokenPosition = { x: 1, y: 1 };
@@ -79,7 +85,7 @@ export namespace Tokenizer {
                     break;
                 case isString:
                     break;
-                case (type = charToType(char)) > TokenType.unknown:
+                case (type = charToType(char, props)) > TokenType.unknown:
                     // The next line is due to a TypeScript bug
                     // @ts-ignore
                     if (type === TokenType.eol)

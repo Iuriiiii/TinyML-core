@@ -16,7 +16,7 @@ var Tokenizer;
 (function (Tokenizer) {
     var spaces = ' \t\r\n';
     var separators = '\\:;[](){},.';
-    var operators = '+-/*^%';
+    var operators = '+-/*^%=!';
     var numbers = '0123456789';
     var characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ';
     function resizeIf(list, token, type, char, pos) {
@@ -30,14 +30,14 @@ var Tokenizer;
         else if (token.type === type) { }
         return token;
     }
-    function charToType(char) {
+    function charToType(char, props) {
         var type = 0 /* TokenType.unknown */;
         switch (true) {
             case numbers.includes(char): return 5 /* TokenType.number */;
-            case separators.includes(char): return 7 /* TokenType.separator */;
-            case operators.includes(char): return 6 /* TokenType.operator */;
+            case (props.separators || separators).includes(char): return 7 /* TokenType.separator */;
+            case (props.operators || operators).includes(char): return 6 /* TokenType.operator */;
             case characters.includes(char): return 3 /* TokenType.identifier */;
-            case spaces.includes(char):
+            case (props.spaces || spaces).includes(char):
                 if (char === '\n')
                     return 8 /* TokenType.eol */;
                 else
@@ -45,7 +45,8 @@ var Tokenizer;
         }
         return type;
     }
-    function tokenizate(source) {
+    function tokenizate(source, props) {
+        if (props === void 0) { props = { spaces: spaces, operators: operators, separators: separators }; }
         var token = { text: '', pos: { x: 1, y: 1 }, type: 9 /* TokenType.eof */ };
         var result = [];
         var pos = { x: 1, y: 1 };
@@ -60,7 +61,7 @@ var Tokenizer;
                     break;
                 case isString:
                     break;
-                case (type = charToType(char)) > 0 /* TokenType.unknown */:
+                case (type = charToType(char, props)) > 0 /* TokenType.unknown */:
                     // The next line is due to a TypeScript bug
                     // @ts-ignore
                     if (type === 8 /* TokenType.eol */)

@@ -8,8 +8,11 @@ var Core;
             this.content = [];
             this.parent = parent;
         }
+        Element.prototype.toParamContent = function (token) {
+            this.params.content.push(token);
+        };
         Element.prototype.declareParam = function (token) {
-            // this.params.values.push({ name: token.text, value: true });
+            this.params.values.push({ name: token, value: true });
         };
         Element.prototype.updateLastParam = function (value) {
             // this.params.values.at(-1).value = value.text;
@@ -77,7 +80,7 @@ var Core;
         var _a;
         if (source.length === 0)
             return new Compilation(true, 'Source empty');
-        var tokens = tokenizer_1.Tokenizer.tokenizate(source), token;
+        var tokens = tokenizer_1.Tokenizer.tokenizate(source, { separators: '[]{}()=;:', operators: '' }), token;
         var x = 0, y = 0, bra = [], cor = [], par = [];
         var element = new Element();
         var waitingValue = false;
@@ -88,15 +91,6 @@ var Core;
             switch (true) {
                 case token.type === 9 /* Tokenizer.TokenType.eof */:
                     break f1;
-                case par.length > 0:
-                    if (token.type === 3 /* Tokenizer.TokenType.identifier */)
-                        element.declareParam(token);
-                    else if (token.type === 2 /* Tokenizer.TokenType.string */) {
-                    }
-                    else if (token.type === 7 /* Tokenizer.TokenType.separator */ && token.text === ':' || token.type === 6 /* Tokenizer.TokenType.operator */ && token.text === '=') { }
-                    else
-                        return new Compilation(false, 'Invalid token type at', token.pos);
-                    break;
                 case token.type === 7 /* Tokenizer.TokenType.separator */:
                     switch (token.text) {
                         case '{':
@@ -126,6 +120,17 @@ var Core;
                             break;
                     }
                     break;
+                case par.length > 0:
+                    if (!waitingValue)
+                        if (token.type !== 3 /* Tokenizer.TokenType.identifier */)
+                            return new Compilation(false, 'Invalid token type at', token.pos);
+                        else
+                            element.declareParam(token);
+                    else if (token.type !== 2 /* Tokenizer.TokenType.string */)
+                        return new Compilation(false, 'Invalid token type at', token.pos);
+                    else
+                        element.updateLastParam(token);
+                    break;
                 default:
                     element.toContent(token);
             }
@@ -140,6 +145,6 @@ var Core;
     }
     Core.compile = compile;
 })(Core || (Core = {}));
-var source = " a thisisaTag {\n    t html { q}\n}\n";
+var source = " a thisisaTag(){\n    t html { q}\n}\n";
 var result = Core.compile(source).toString();
 console.log(result);
