@@ -1,7 +1,46 @@
 "use strict";
+/*
+MIT License
+
+Copyright (c) 2022 Iuriiiii
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Core = void 0;
 const tokenizer_1 = require("../tokenizer");
+/*
+    a (); [ No tag ]
+    a(); [tag]
+
+    tag {} [No tag]
+*/
+/*
+
+html {
+    body {
+        [This is a line of code]
+        { any code that i want <> </> }
+    }
+}
+
+*/
 var Core;
 (function (Core) {
     function tokensToString(tokens) {
@@ -27,6 +66,7 @@ var Core;
             return this.string;
         }
         get() {
+            /* @ts-ignore */
             return this;
         }
     }
@@ -93,6 +133,18 @@ var Core;
         return tree;
     }
     Core.parse = parse;
+    // function getLastToken(tokens: Token[]): Token | undefined {
+    //     if (tokens.length === 0)
+    //         return;
+    //     const nonSpaceTokens = tokens.filter((token) =>
+    //         token.type !== TokenType.space &&
+    //         token.type !== TokenType.eol &&
+    //         token.type !== TokenType.eof
+    //     );
+    //     if (nonSpaceTokens.length === 0)
+    //         return;
+    //     return nonSpaceTokens.at(-1);
+    // }
     function error(description, token) {
         return new Error(description + ` at ${token.pos.y}:${token.pos.x}`);
     }
@@ -104,24 +156,25 @@ var Core;
     }
     function stringHasInvalidFormat(tokens) {
         const last = tokens.at(-1);
-        if (!last || last.type !== 2)
+        if (!last || last.type !== 2 /* TokenType.string */)
             return false;
         else if (last.text.length <= 1)
             return true;
         return last.text.startsWith('"') !== last.text.endsWith('"');
     }
     function tokenIsIdentifierOrInstruction(token) {
-        return token && (token.type === 3 || token.type === 4);
+        return token && (token.type === 3 /* TokenType.identifier */ || token.type === 4 /* TokenType.instruction */);
     }
     function parseTokens(tokens, context = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 }) {
         if (tokens.length === 0)
             return [];
+        // console.log(tokens);
         const result = [], start = context.i;
         let lastNonSpaceToken, lastNonSpaceTokenIndex = Number.MAX_SAFE_INTEGER, raws = [], params, comments, token;
         f1: for (; context.i < tokens.length; context.i++) {
             const i = context.i;
             token = tokens[context.i];
-            if (token.type === 9) {
+            if (token.type === 9 /* TokenType.eof */) {
                 if (context.parentheses)
                     return error('Parenthese closure expected', token);
                 if (context.brackets)
@@ -130,12 +183,13 @@ var Core;
                     return error('Key closure expected', token);
                 break;
             }
-            if (token.type === 7 && token.text === '}' && context.brackets === 0) {
+            if (token.type === 7 /* TokenType.separator */ && token.text === '}' && context.brackets === 0) {
                 context.keys--;
                 break;
             }
+            /* This while just execute once, its needed to fasty code breaks */
             w1: while (context.pure === 0) {
-                if (token.type === 7) {
+                if (token.type === 7 /* TokenType.separator */) {
                     const isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
                     switch (token.text) {
                         case ';':
@@ -146,12 +200,15 @@ var Core;
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
                             switch (true) {
+                                /* identifier1;identifier2 */
                                 case left && right:
                                     break;
+                                /* identifier[\s+]?; */
                                 case !isPure && !right:
-                                    pushRawIfNeeded(result, result.pop().tokens.slice(1, lastNonSpaceTokenIndex));
+                                    pushRawIfNeeded(result, result.pop().tokens.slice(0, lastNonSpaceTokenIndex));
                                     result.push(new Element(lastNonSpaceToken, undefined, params));
                                     break;
+                                /* ;identifier */
                                 case !left && right:
                                     break;
                             }
@@ -159,7 +216,7 @@ var Core;
                         case '\\':
                             if (context.brackets)
                                 break;
-                            if (!(tokens[++context.i].type === 7))
+                            if (!(tokens[++context.i].type === 7 /* TokenType.separator */))
                                 context.i--;
                             token = tokens[context.i];
                             break;
@@ -169,6 +226,7 @@ var Core;
                             if (context.parentheses)
                                 return error('Invalid token', token);
                             params = [];
+                            /* Skips the first '[' */
                             if (context.parentheses++ === 0)
                                 continue f1;
                             break;
@@ -184,12 +242,16 @@ var Core;
                             if (context.parentheses)
                                 return error('Invalid token', token);
                             comments = [];
+                            /* Skips the first '[' */
                             if (context.brackets++ === 0)
                                 continue f1;
+                            // console.log('[');
                             break;
                         case ']':
                             if (--context.brackets < 0 || context.parentheses)
                                 return error('Invalid token', token);
+                            // console.log(context.brackets);
+                            /* Skip the last ']' */
                             if (context.brackets === 0) {
                                 if (pushRawIfNeeded(result, raws))
                                     raws = [];
@@ -207,7 +269,8 @@ var Core;
                             if (isPure)
                                 context.pure++;
                             else
-                                raws = raws.slice(1, lastNonSpaceTokenIndex);
+                                raws = raws.slice(0, lastNonSpaceTokenIndex);
+                            // console.log('>>>', raws, lastNonSpaceTokenIndex);
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
                             const children = parseTokens(tokens, context);
@@ -221,13 +284,13 @@ var Core;
                 }
                 break;
             }
-            if ((context.parentheses + context.brackets) === 0 &&
-                token.type !== 1 &&
-                token.type !== 8)
-                lastNonSpaceToken = token, lastNonSpaceTokenIndex = context.i - start;
             (context.brackets && comments ||
                 context.parentheses && params ||
                 raws).push(token);
+            if ((context.parentheses + context.brackets) === 0 &&
+                token.type !== 1 /* TokenType.space */ &&
+                token.type !== 8 /* TokenType.eol */)
+                lastNonSpaceToken = token, lastNonSpaceTokenIndex = raws.length - 1;
         }
         if (context.keys < 0)
             return error('Invalid token', token);
@@ -243,4 +306,39 @@ var Core;
         }
     }
 })(Core = exports.Core || (exports.Core = {}));
+// let source = {
+//     params: 'html(param1){}',
+//     source1: ` a thisisaTag(){
+//         t html { q}
+//         THIs is a raw ctext
+//     }
+//     `,
+//     source2: `
+//             title { Hola Mundo }
+//     `,
+//     source3: `
+//     [ This is a comment {} ]
+// `,
+//     source4: '\\{This is a raw content\\}',
+//     source5: `
+//     [ This is a comment {} ]
+// `,
+//     source6: `
+// body {
+//     header {
+//         h1 { E-Commerce } div {
+//         }
+//     }
+// }
+// `
+// };
+// const tree = Core.parse(source.source6);
+// console.log(JSON.stringify(tree, undefined, ' '));
+/*
+a <thisisaTag>
+    t html { q}
+</thisisaTag>
+*/
+// let result = Core.compile(source).toString();
+// console.log(result);
 //# sourceMappingURL=index.js.map

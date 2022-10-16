@@ -1,4 +1,3 @@
-"use strict";
 /*
 MIT License
 
@@ -22,24 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-exports.__esModule = true;
-exports.Core = void 0;
-var tokenizer_1 = require("../tokenizer");
+import { Tokenizer } from '../tokenizer';
 /*
     a (); [ No tag ]
     a(); [tag]
@@ -56,94 +38,93 @@ html {
 }
 
 */
-var Core;
+export var Core;
 (function (Core) {
     function tokensToString(tokens) {
-        return tokens.map(function (token) { return token.text; }).join('');
+        return tokens.map(token => token.text).join('');
     }
-    var Elemental = /** @class */ (function () {
-        function Elemental(types, tokens) {
+    class Elemental {
+        tokens;
+        isRaw;
+        isElement;
+        isComment;
+        isCode;
+        constructor(types, tokens) {
             this.tokens = tokens;
-            this.isRaw = function () { return types.isRaw; };
-            this.isElement = function () { return types.isElement; };
-            this.isComment = function () { return types.isComment; };
-            this.isCode = function () { return types.isCode; };
+            this.isRaw = () => types.isRaw;
+            this.isElement = () => types.isElement;
+            this.isComment = () => types.isComment;
+            this.isCode = () => types.isCode;
         }
-        Elemental.prototype.toString = function () {
+        string;
+        toString() {
             if (this.string === undefined)
                 this.string = tokensToString(this.tokens);
             return this.string;
-        };
-        Elemental.prototype.get = function () {
+        }
+        get() {
             /* @ts-ignore */
             return this;
-        };
-        return Elemental;
-    }());
-    var Element = /** @class */ (function (_super) {
-        __extends(Element, _super);
-        function Element(tag, children, params) {
-            var _this = _super.call(this, {
+        }
+    }
+    class Element extends Elemental {
+        tag;
+        params;
+        children;
+        constructor(tag, children, params) {
+            super({
                 isCode: false,
                 isComment: false,
                 isElement: true,
                 isRaw: false
-            }) || this;
-            _this.tag = tag;
-            _this.children = children;
-            _this.params = params;
-            return _this;
+            });
+            this.tag = tag;
+            this.children = children;
+            this.params = params;
         }
-        Element.prototype.paramsToString = function () {
+        paramsToString() {
             return tokensToString(this.params);
-        };
-        return Element;
-    }(Elemental));
+        }
+    }
     Core.Element = Element;
-    var Comment = /** @class */ (function (_super) {
-        __extends(Comment, _super);
-        function Comment(tokens) {
-            return _super.call(this, {
+    class Comment extends Elemental {
+        constructor(tokens) {
+            super({
                 isCode: false,
                 isComment: true,
                 isElement: false,
                 isRaw: false
-            }, tokens) || this;
+            }, tokens);
         }
-        return Comment;
-    }(Elemental));
+    }
     Core.Comment = Comment;
-    var Raw = /** @class */ (function (_super) {
-        __extends(Raw, _super);
-        function Raw(tokens) {
-            return _super.call(this, {
+    class Raw extends Elemental {
+        constructor(tokens) {
+            super({
                 isCode: false,
                 isComment: false,
                 isElement: false,
                 isRaw: true
-            }, tokens) || this;
+            }, tokens);
         }
-        return Raw;
-    }(Elemental));
+    }
     Core.Raw = Raw;
-    var Code = /** @class */ (function (_super) {
-        __extends(Code, _super);
-        function Code(tokens) {
-            return _super.call(this, {
+    class Code extends Elemental {
+        constructor(tokens) {
+            super({
                 isCode: true,
                 isComment: false,
                 isElement: false,
                 isRaw: false
-            }, tokens) || this;
+            }, tokens);
         }
-        return Code;
-    }(Elemental));
+    }
     Core.Code = Code;
     function parse(source) {
-        var tokens = tokenizer_1.Tokenizer.tokenizate(source, {
+        const tokens = Tokenizer.tokenizate(source, {
             separators: '(){}[];:=,\\'
         });
-        var tree = parseTokens(tokens);
+        const tree = parseTokens(tokens);
         if (tree instanceof Error)
             throw tree;
         return tree;
@@ -162,7 +143,7 @@ var Core;
     //     return nonSpaceTokens.at(-1);
     // }
     function error(description, token) {
-        return new Error(description + " at ".concat(token.pos.y, ":").concat(token.pos.x));
+        return new Error(description + ` at ${token.pos.y}:${token.pos.x}`);
     }
     function pushRawIfNeeded(stack, raws) {
         if (raws.length === 0)
@@ -171,7 +152,7 @@ var Core;
         return true;
     }
     function stringHasInvalidFormat(tokens) {
-        var last = tokens.at(-1);
+        const last = tokens.at(-1);
         if (!last || last.type !== 2 /* TokenType.string */)
             return false;
         else if (last.text.length <= 1)
@@ -181,15 +162,14 @@ var Core;
     function tokenIsIdentifierOrInstruction(token) {
         return token && (token.type === 3 /* TokenType.identifier */ || token.type === 4 /* TokenType.instruction */);
     }
-    function parseTokens(tokens, context) {
-        if (context === void 0) { context = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 }; }
+    function parseTokens(tokens, context = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 }) {
         if (tokens.length === 0)
             return [];
         // console.log(tokens);
-        var result = [], start = context.i;
-        var lastNonSpaceToken, lastNonSpaceTokenIndex = Number.MAX_SAFE_INTEGER, raws = [], params, comments, token;
+        const result = [], start = context.i;
+        let lastNonSpaceToken, lastNonSpaceTokenIndex = Number.MAX_SAFE_INTEGER, raws = [], params, comments, token;
         f1: for (; context.i < tokens.length; context.i++) {
-            var i = context.i;
+            const i = context.i;
             token = tokens[context.i];
             if (token.type === 9 /* TokenType.eof */) {
                 if (context.parentheses)
@@ -207,13 +187,13 @@ var Core;
             /* This while just execute once, its needed to fasty code breaks */
             w1: while (context.pure === 0) {
                 if (token.type === 7 /* TokenType.separator */) {
-                    var isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
+                    const isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
                     switch (token.text) {
                         case ';':
                             if (context.brackets)
                                 break;
-                            var left = tokenIsIdentifierOrInstruction(tokens[i - 1]);
-                            var right = tokenIsIdentifierOrInstruction(tokens[i + 1]);
+                            const left = tokenIsIdentifierOrInstruction(tokens[i - 1]);
+                            const right = tokenIsIdentifierOrInstruction(tokens[i + 1]);
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
                             switch (true) {
@@ -290,7 +270,7 @@ var Core;
                             // console.log('>>>', raws, lastNonSpaceTokenIndex);
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
-                            var children = parseTokens(tokens, context);
+                            const children = parseTokens(tokens, context);
                             if (context.pure > 0)
                                 context.pure--;
                             if (children instanceof Error)
@@ -316,13 +296,13 @@ var Core;
         }
         pushRawIfNeeded(result, raws);
         if (result.length > 0) {
-            var lastItem = result.at(-1);
+            const lastItem = result.at(-1);
             if (lastItem.isRaw() && stringHasInvalidFormat(lastItem.tokens))
                 return error('Infinite string detected', lastItem.tokens.at(-1));
             return result;
         }
     }
-})(Core = exports.Core || (exports.Core = {}));
+})(Core || (Core = {}));
 // let source = {
 //     params: 'html(param1){}',
 //     source1: ` a thisisaTag(){
@@ -358,3 +338,4 @@ a <thisisaTag>
 */
 // let result = Core.compile(source).toString();
 // console.log(result);
+//# sourceMappingURL=index.js.map

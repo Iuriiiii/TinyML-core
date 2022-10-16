@@ -1,4 +1,3 @@
-"use strict";
 /*
 MIT License
 
@@ -22,26 +21,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-exports.__esModule = true;
-exports.Tokenizer = void 0;
-var Tokenizer;
+export var Tokenizer;
 (function (Tokenizer) {
-    var spaces = ' \t\r\n';
-    var separators = '\\:;[](){},.';
-    var operators = '+-/*^%=!';
-    var numbers = '0123456789';
-    var characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ';
+    const spaces = ' \t\r\n';
+    const separators = '\\:;[](){},.';
+    const operators = '+-/*^%=!';
+    const numbers = '0123456789';
+    const characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ';
     function resizeIf(list, token, type, char, pos) {
         if (token.type === 9 /* TokenType.eof */)
             token.type = type;
@@ -49,13 +35,13 @@ var Tokenizer;
         else if (type === 5 /* TokenType.number */ && token.type === 3 /* TokenType.identifier */) { }
         else if (token.type === 7 /* TokenType.separator */ || token.type !== type) {
             list.push(token);
-            return { text: '', pos: __assign({}, pos), type: type };
+            return { text: '', pos: { ...pos }, type: type };
         }
         else if (token.type === type) { }
         return token;
     }
     function charToType(char, props) {
-        var type = 0 /* TokenType.unknown */;
+        let type = 0 /* TokenType.unknown */;
         switch (true) {
             case numbers.includes(char): return 5 /* TokenType.number */;
             case (props.separators || separators).includes(char): return 7 /* TokenType.separator */;
@@ -69,15 +55,14 @@ var Tokenizer;
         }
         return type;
     }
-    function tokenizate(source, props) {
-        if (props === void 0) { props = { spaces: spaces, operators: operators, separators: separators }; }
-        var token = { text: '', pos: { x: 1, y: 1 }, type: 9 /* TokenType.eof */ };
-        var result = [];
-        var pos = { x: 1, y: 1 };
-        var isString = false;
-        var type = 0 /* TokenType.unknown */;
-        for (var i = 0; i < source.length; i++) {
-            var char = source[i];
+    function tokenizate(source, props = { spaces, operators, separators }) {
+        let token = { text: '', pos: { x: 1, y: 1 }, type: 9 /* TokenType.eof */ };
+        let result = [];
+        let pos = { x: 1, y: 1 };
+        let isString = false;
+        let type = 0 /* TokenType.unknown */;
+        for (let i = 0; i < source.length; i++) {
+            let char = source[i];
             switch (true) {
                 case char === '"':
                     if (isString = !isString)
@@ -100,11 +85,12 @@ var Tokenizer;
         }
         result.push(token);
         if (result.at(-1).type !== 9 /* TokenType.eof */)
-            result.push({ text: '', type: 9 /* TokenType.eof */, pos: pos });
+            result.push({ text: '', type: 9 /* TokenType.eof */, pos });
         return result;
     }
     Tokenizer.tokenizate = tokenizate;
-})(Tokenizer = exports.Tokenizer || (exports.Tokenizer = {}));
+})(Tokenizer || (Tokenizer = {}));
 // console.log(TinyML.Tokenizer.tokenizate(`w-      "- q
 // d"{wq}
 // wd`));
+//# sourceMappingURL=index.js.map

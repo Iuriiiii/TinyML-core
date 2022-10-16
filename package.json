@@ -1,6 +1,6 @@
 {
   "name": "tinyml-core",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "TinyML-syntax parser",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "build": "npm run build:esnext && npm run build:common",
     "dev:tokenizer": "tsc-watch ./src/tokenizer/index.ts -outDir ./src/ --onSuccess \"node ./src/tokenizer/index.js\"",
     "dev:core": "tsc-watch ./src/core/index.ts -outDir ./src/ --onSuccess \"node ./src/core/index.js\"",
-    "publicate": "git add . && git commit -m \"+little fix\" && git push && npm publish",
+    "publicate": "npm run build && git add . && git commit -m \"+little fix\" && git push && npm publish",
     "test": "jest"
   },
   "repository": {
