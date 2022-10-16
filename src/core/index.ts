@@ -366,7 +366,7 @@ export namespace Core {
                                 context.pure++;
                             else
                                 raws = raws.slice(0, lastNonSpaceTokenIndex);
-                            console.log('>>>', raws, lastNonSpaceTokenIndex);
+                            // console.log('>>>', raws, lastNonSpaceTokenIndex);
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
 
