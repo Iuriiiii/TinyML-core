@@ -1,7 +1,7 @@
 {
-  "name": "tinyml-tokenizer",
-  "version": "2.0.1",
-  "description": "TinyML Tokenizer",
+  "name": "tinyml-core",
+  "version": "2.0.3",
+  "description": "TinyML-syntax parser",
   "main": "index.js",
   "scripts": {
     "build:test": "npm run build && jest",
