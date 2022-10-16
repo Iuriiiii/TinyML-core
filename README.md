@@ -72,6 +72,7 @@ html(lang="en") {
 ##### Return
 
 ✅ An array with the data
+
 ❌ Throw an error.
 
 ##### Params:
@@ -126,15 +127,20 @@ The following members & methods will be inherited by `Core.Raw`, `Core.Element`,
 This data type contains information about an element of the source code. It has the following members:
 
 🔹 <b>text: string</b> - The string of the token.
+
 🔹 <b>pos: TokenPosition /* {x: number, y: number} */</b> - The location of the token in the source code.
+
 🔹 <b>text: TokenType</b> - The token type.
+
 
 ### Core.Element
 
 This data type defines an element. It is composed by the following members.
 
 🔹 <b>tag: Token</b> - The token that contain the tag name and location. The type ever will be `TokenType.identifier`.
+
 🔹 <b>params: Token[]</b> - All tokens that compounds the parameters.
+
 🔹 <b>children: (Core.Element | Core.Raw | Core.Comment | Core.Code)[] | undefined</b> - The content inside of. An array of TinyML elements or undefined.
 
 ### Core.Raw
