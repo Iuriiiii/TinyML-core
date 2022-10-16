@@ -6,7 +6,7 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "noImplicitAny": true,
-        "removeComments": true,
+        "removeComments": false,
         "preserveConstEnums": false,
         "sourceMap": true,
         "esModuleInterop": true,
