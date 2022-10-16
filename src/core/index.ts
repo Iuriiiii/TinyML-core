@@ -282,7 +282,7 @@ export namespace Core {
                                     break;
                                 /* identifier[\s+]?; */
                                 case !isPure && !right:
-                                    pushRawIfNeeded(result, result.pop().tokens.slice(1, lastNonSpaceTokenIndex));
+                                    pushRawIfNeeded(result, result.pop().tokens.slice(0, lastNonSpaceTokenIndex));
                                     result.push(new Element(lastNonSpaceToken, undefined, params));
                                     break;
                                 /* ;identifier */
@@ -365,8 +365,8 @@ export namespace Core {
                             if (isPure)
                                 context.pure++;
                             else
-                                raws = raws.slice(1, lastNonSpaceTokenIndex);
-
+                                raws = raws.slice(0, lastNonSpaceTokenIndex);
+                            console.log('>>>', raws, lastNonSpaceTokenIndex);
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
 
@@ -387,18 +387,18 @@ export namespace Core {
                 break;
             }
 
-            if (
-                (context.parentheses + context.brackets) === 0 &&
-                token.type !== TokenType.space &&
-                token.type !== TokenType.eol
-            )
-                lastNonSpaceToken = token, lastNonSpaceTokenIndex = context.i - start;
-
             (
                 context.brackets && comments ||
                 context.parentheses && params ||
                 raws
             ).push(token);
+
+            if (
+                (context.parentheses + context.brackets) === 0 &&
+                token.type !== TokenType.space &&
+                token.type !== TokenType.eol
+            )
+                lastNonSpaceToken = token, lastNonSpaceTokenIndex = raws.length - 1;
         }
 
         if (context.keys < 0)
@@ -438,12 +438,21 @@ export namespace Core {
 //     source4: '\\{This is a raw content\\}',
 //     source5: `
 //     [ This is a comment {} ]
+// `,
+//     source6: `
+// body {
+//     header {
+//         h1 { E-Commerce } div {
+
+//         }
+//     }
+// }
 // `
 // };
 
-// const tree = Core.parse(source.source5);
+// const tree = Core.parse(source.source6);
 
-// console.log(JSON.stringify(tree, undefined, ''));
+// console.log(JSON.stringify(tree, undefined, ' '));
 
 /*
 a <thisisaTag>
