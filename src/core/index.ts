@@ -1,222 +1,433 @@
-import { Tokenizer } from '../tokenizer';
+import { Tokenizer, TokenType, Token, TokenPosition } from '../tokenizer';
 
-namespace Core {
+/*
+    a (); [ No tag ]
+    a(); [tag]
 
-    export interface IElement {
-        tag: Tokenizer.Token | undefined,
-        params: IElementParameters | undefined,
-        content: (Tokenizer.Token[] | Element)[] | undefined,
-        parent: Element | undefined;
+    tag {} [No tag]
+*/
+
+
+/*
+
+html {
+    body {
+        [This is a line of code]
+        { any code that i want <> </> }
+    }
+}
+
+*/
+
+export namespace Core {
+    interface IElement {
+        tag: Token,
+        params?: Token[]
+        children?: Item[]
     }
 
-    export interface IParameter {
-        name: Tokenizer.Token,
-        value: Tokenizer.Token | boolean
+    function tokensToString(tokens: Token[]): string {
+        return tokens.map(token => token.text).join('');
     }
 
-    export interface IElementParameters {
-        content: Tokenizer.Token[],
-        values: IParameter[]
+    interface ITypes {
+        isRaw: () => boolean,
+        isElement: () => boolean,
+        isComment: () => boolean,
+        isCode: () => boolean
     }
 
-    type TContent = (Tokenizer.Token[] | Element)[];
-
-    export class Element implements IElement {
-        parent: Element | undefined;
-        tag: Tokenizer.Token | undefined;
-        params: IElementParameters | undefined;
-        content: TContent = [];
-
-        constructor(parent?: Element) {
-            this.parent = parent;
-        }
-
-        toParamContent(token: Tokenizer.Token): void {
-            this.params.content.push(token);
-        }
-
-        declareParam(token: Tokenizer.Token): void {
-            this.params.values.push({ name: token, value: true });
-        }
-
-        updateLastParam(value: Tokenizer.Token): void {
-            // this.params.values.at(-1).value = value.text;
-        }
-
-        getLastContentElement(): Tokenizer.Token[] | Element | undefined {
-            return this.content.at(-1);
-        }
-
-        toContent(token: Element): void;
-        toContent(token: Tokenizer.Token): void;
-        toContent(token: any): void {
-            let element = this.getLastContentElement();
-
-            if (token instanceof Element)
-                this.content.push(token);
-            else if (element instanceof Element || element === undefined)
-                this.content.push([token]);
-            else
-                element.push(token);
-
-            // console.log('this.content:', this.content, 'element:', element);
-        }
-
-        initializeContent() {
-            this.content = this.content || [];
-        }
-
-        canHasTag(): boolean {
-            let element = this.getLastContentElement();
-            // console.log(element);
-
-            if (element instanceof Element || element === undefined)
-                return false;
-
-            let lastToken = getLastIdentifierToken(element);
-
-            if (lastToken === undefined)
-                return false;
-
-            this.tag = element.splice(lastToken, 1)[0];
-
-            return true;
-        }
-
-        hasTag(): boolean {
-            return this.tag !== undefined;
-        }
+    type ITypesAsBoolean = {
+        [Property in keyof ITypes]: boolean
+    }
+    interface IElemental extends ITypes {
+        tokens: Token[] | undefined,
+        toString: () => string
     }
 
-    function getLastIdentifierToken(tokens: Tokenizer.Token[]): number | undefined {
-        let i = tokens.length;
+    class Elemental implements IElemental {
+        tokens: Token[] | undefined;
+        isRaw: () => boolean;
+        isElement: () => boolean;
+        isComment: () => boolean;
+        isCode: () => boolean;
 
-        while (i-- && tokens[i].type === Tokenizer.TokenType.space);
-
-        if (tokens[i].type !== Tokenizer.TokenType.identifier)
-            return;
-
-        return i;
-    }
-
-    export class Compilation {
-        content: TContent;
-        isSuccess: boolean;
-        description: string;
-        errorPosition: Tokenizer.TokenPosition | undefined;
-
-        constructor(success: boolean, description: string, position?: Tokenizer.TokenPosition) {
-            this.isSuccess = success;
-
-            if (position && (description.endsWith('at') || description.endsWith('since')))
-                description += ` ${position.y}:${position.x}`;
-
-            this.description = description;
-            this.errorPosition = position;
+        constructor(types: ITypesAsBoolean, tokens?: Token[]) {
+            this.tokens = tokens;
+            this.isRaw = () => types.isRaw;
+            this.isElement = () => types.isElement;
+            this.isComment = () => types.isComment;
+            this.isCode = () => types.isCode;
         }
 
-        setContent(content: TContent): Compilation {
-            this.content = content;
-            return this;
-        }
+        string: string | undefined;
 
         toString(): string {
-            return JSON.stringify(this, undefined, '  ');
+            if (this.string === undefined)
+                this.string = tokensToString(this.tokens);
+
+            return this.string;
+        }
+
+        get<T extends Element | Raw | Code | Comment>(): T {
+            /* @ts-ignore */
+            return this as T;
         }
     }
 
-    export function compile(source: string): Compilation {
-        if (source.length === 0)
-            return new Compilation(true, 'Source empty');
+    export class Element extends Elemental implements IElement {
+        tag: Token;
+        params: Token[];
+        children?: Item[];
 
-        let tokens = Tokenizer.tokenizate(source, { separators: '[]{}()=;:', operators: '' }), token: Tokenizer.Token;
-        let x = 0, y = 0, bra: Tokenizer.Token[] = [], cor: Tokenizer.Token[] = [], par: Tokenizer.Token[] = [];
-        let element = new Element();
-        let waitingValue = false;
+        constructor(tag: Token, children?: Item[], params?: Token[]) {
+            super({
+                isCode: false,
+                isComment: false,
+                isElement: true,
+                isRaw: false
+            });
+            this.tag = tag;
+            this.children = children;
+            this.params = params;
+        }
 
-        if (tokens[0].type === Tokenizer.TokenType.eof)
-            return new Compilation(true, 'Source empty');
+        paramsToString(): string {
+            return tokensToString(this.params);
+        }
+    }
 
-        f1: for (let i = 0; i < tokens.length; i++) {
-            token = tokens[i];
+    export class Comment extends Elemental {
 
-            switch (true) {
-                case token.type === Tokenizer.TokenType.eof:
-                    break f1;
-                case token.type === Tokenizer.TokenType.separator:
+        constructor(tokens: Token[]) {
+            super({
+                isCode: false,
+                isComment: true,
+                isElement: false,
+                isRaw: false
+            }, tokens);
+        }
+    }
+
+    export class Raw extends Elemental {
+        constructor(tokens: Token[]) {
+            super({
+                isCode: false,
+                isComment: false,
+                isElement: false,
+                isRaw: true
+            }, tokens);
+        }
+    }
+
+    export class Code extends Elemental {
+        constructor(tokens: Token[]) {
+            super({
+                isCode: true,
+                isComment: false,
+                isElement: false,
+                isRaw: false
+            }, tokens);
+        }
+    }
+
+    export function parse(source: string) {
+        const tokens = Tokenizer.tokenizate(source, {
+            separators: '(){}[];:=,\\'
+        });
+
+        const tree = parseTokens(tokens);
+
+        if (tree instanceof Error)
+            throw tree;
+
+        return tree;
+    }
+
+    // function getLastToken(tokens: Token[]): Token | undefined {
+    //     if (tokens.length === 0)
+    //         return;
+
+    //     const nonSpaceTokens = tokens.filter((token) =>
+    //         token.type !== TokenType.space &&
+    //         token.type !== TokenType.eol &&
+    //         token.type !== TokenType.eof
+    //     );
+
+    //     if (nonSpaceTokens.length === 0)
+    //         return;
+
+    //     return nonSpaceTokens.at(-1);
+    // }
+
+    function error(description: string, token: Token): Error {
+        return new Error(description + ` at ${token.pos.y}:${token.pos.x}`)
+    }
+
+    export type Item = (Element | Comment | Raw | Code);
+
+    interface IContext {
+        i: number,
+        parentheses: number,
+        keys: number,
+        brackets: number,
+        pure: number
+    }
+
+    function pushRawIfNeeded(stack: Item[], raws: Token[]): boolean {
+        if (raws.length === 0)
+            return false;
+
+        stack.push(new Raw(raws));
+
+        return true;
+    }
+
+    function stringHasInvalidFormat(tokens: Token[]): boolean {
+        const last = tokens.at(-1);
+
+        if (!last || last.type !== TokenType.string)
+            return false;
+        else if (last.text.length <= 1)
+            return true;
+
+
+        return last.text.startsWith('"') !== last.text.endsWith('"');
+    }
+
+    function tokenIsIdentifierOrInstruction(token?: Token) {
+        return token && (token.type === TokenType.identifier || token.type === TokenType.instruction);
+    }
+
+    function parseTokens(tokens: Token[], context: IContext = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 }): Item[] | Error {
+        if (tokens.length === 0)
+            return [];
+
+        // console.log(tokens);
+
+        const result: Item[] = [], start: number = context.i;
+        let lastNonSpaceToken: Token | undefined,
+            lastNonSpaceTokenIndex: number = Number.MAX_SAFE_INTEGER,
+            raws: Token[] = [],
+            params: Token[] | undefined,
+            comments: Token[] | undefined,
+            token: Token;
+
+        f1: for (; context.i < tokens.length; context.i++) {
+            const i = context.i;
+            token = tokens[context.i];
+
+            if (token.type === TokenType.eof) {
+                if (context.parentheses)
+                    return error('Parenthese closure expected', token);
+
+                if (context.brackets)
+                    return error('Bracket closure expected', token);
+
+                if (context.keys)
+                    return error('Key closure expected', token);
+
+                break;
+            }
+
+            if (token.type === TokenType.separator && token.text === '}' && context.brackets === 0) {
+                context.keys--;
+                break;
+            }
+
+
+            /* This while just execute once, its needed to fasty code breaks */
+            w1: while (context.pure === 0) {
+                if (token.type === TokenType.separator) {
+                    const isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
+
                     switch (token.text) {
-                        case '{':
-                            bra.push(token);
-                            element.canHasTag();
-                            element = new Element(element);
+                        case ';':
+                            if (context.brackets)
+                                break;
 
+                            const left = tokenIsIdentifierOrInstruction(tokens[i - 1]);
+                            const right = tokenIsIdentifierOrInstruction(tokens[i + 1]);
+
+                            if (pushRawIfNeeded(result, raws))
+                                raws = [];
+
+                            switch (true) {
+                                /* identifier1;identifier2 */
+                                case left && right:
+                                    break;
+                                /* identifier[\s+]?; */
+                                case !isPure && !right:
+                                    pushRawIfNeeded(result, result.pop().tokens.slice(1, lastNonSpaceTokenIndex));
+                                    result.push(new Element(lastNonSpaceToken, undefined, params));
+                                    break;
+                                /* ;identifier */
+                                case !left && right:
+                                    break;
+                            }
+
+                            continue f1;
+                        case '\\':
+                            if (context.brackets)
+                                break;
+
+                            if (!(tokens[++context.i].type === TokenType.separator))
+                                context.i--;
+
+                            token = tokens[context.i];
                             break;
                         case '(':
-                            par.push(token);
-                            element.params = { content: [], values: [] };
+                            if (context.brackets)
+                                break;
 
-                            break;
-                        case '[':
-                            break;
-                        case '}':
-                            if (bra.length === 0)
-                                return new Compilation(false, 'Invalid separator "}" at', token.pos);
+                            if (context.parentheses)
+                                return error('Invalid token', token);
 
-                            element.parent.toContent(element);
-                            [element.parent, element] = [undefined, element.parent];
-                            bra.pop();
+                            params = [];
+
+                            /* Skips the first '[' */
+                            if (context.parentheses++ === 0)
+                                continue f1;
 
                             break;
                         case ')':
-                            if (par.length === 0)
-                                return new Compilation(false, 'Invalid separator ")" at', token.pos);
+                            if (context.brackets)
+                                break;
 
+                            if (--context.parentheses < 0)
+                                return error('Invalid token', token);
 
+                            if (context.parentheses === 0)
+                                continue f1;
 
-                            par.pop();
+                            break;
+                        case '[':
+                            if (context.parentheses)
+                                return error('Invalid token', token);
+
+                            comments = [];
+                            /* Skips the first '[' */
+                            if (context.brackets++ === 0)
+                                continue f1;
+                            // console.log('[');
+
                             break;
                         case ']':
+                            if (--context.brackets < 0 || context.parentheses)
+                                return error('Invalid token', token);
+
+                            // console.log(context.brackets);
+
+                            /* Skip the last ']' */
+                            if (context.brackets === 0) {
+                                if (pushRawIfNeeded(result, raws))
+                                    raws = [];
+
+                                result.push(new Comment(comments));
+                                continue f1;
+                            }
+
                             break;
+                        case '{':
+                            if (context.brackets > 0)
+                                break;
+
+                            if (context.parentheses)
+                                return error('Invalid token', token);
+
+                            context.i++;
+                            context.keys++;
+
+                            if (isPure)
+                                context.pure++;
+                            else
+                                raws = raws.slice(1, lastNonSpaceTokenIndex);
+
+                            if (pushRawIfNeeded(result, raws))
+                                raws = [];
+
+                            const children = parseTokens(tokens, context);
+
+                            if (context.pure > 0)
+                                context.pure--;
+
+                            if (children instanceof Error)
+                                return children as Error;
+
+                            result.push(context.pure ? children[0] : new Element(lastNonSpaceToken, children, params));
+
+                            continue f1;
                     }
 
-                    break;
-                case par.length > 0:
-                    if (!waitingValue)
-                        if (token.type !== Tokenizer.TokenType.identifier)
-                            return new Compilation(false, 'Invalid token type at', token.pos);
-                        else
-                            element.declareParam(token);
-                    else
-                        if (token.type !== Tokenizer.TokenType.string)
-                            return new Compilation(false, 'Invalid token type at', token.pos);
-                        else
-                            element.updateLastParam(token);
-
-
-                    break;
-                default:
-                    element.toContent(token);
+                }
+                break;
             }
+
+            if (
+                (context.parentheses + context.brackets) === 0 &&
+                token.type !== TokenType.space &&
+                token.type !== TokenType.eol
+            )
+                lastNonSpaceToken = token, lastNonSpaceTokenIndex = context.i - start;
+
+            (
+                context.brackets && comments ||
+                context.parentheses && params ||
+                raws
+            ).push(token);
         }
 
-        if (bra.length > 0)
-            return new Compilation(false, 'Infinite code block detected since', bra.at(-1).pos);
-        else if (par.length > 0)
-            return new Compilation(false, 'Infinite parameters block detected since', par.at(-1).pos);
-        else if (cor.length > 0)
-            return new Compilation(false, 'Infinite comment since', bra.at(-1).pos);
+        if (context.keys < 0)
+            return error('Invalid token', token);
 
-        return (new Compilation(true, 'Source compiled succefully')).setContent(element.content);
+        if (context.pure > 0) {
+            return [new Code(raws)];
+        }
+
+        pushRawIfNeeded(result, raws);
+
+        if (result.length > 0) {
+            const lastItem = result.at(-1);
+            if (lastItem.isRaw() && stringHasInvalidFormat(lastItem.tokens))
+                return error('Infinite string detected', lastItem.tokens.at(-1));
+
+            return result;
+        }
     }
-
 }
 
-let source = ` a thisisaTag(){
+// let source = {
+//     params: 'html(param1){}',
+//     source1: ` a thisisaTag(){
+//         t html { q}
+//         THIs is a raw ctext
+//     }
+//     `,
+//     source2: `
+
+//             title { Hola Mundo }
+
+//     `,
+//     source3: `
+//     [ This is a comment {} ]
+// `,
+//     source4: '\\{This is a raw content\\}',
+//     source5: `
+//     [ This is a comment {} ]
+// `
+// };
+
+// const tree = Core.parse(source.source5);
+
+// console.log(JSON.stringify(tree, undefined, ''));
+
+/*
+a <thisisaTag>
     t html { q}
-}
-`;
+</thisisaTag>
+*/
 
-let result = Core.compile(source).toString();
+// let result = Core.compile(source).toString();
 
 
-console.log(result);
+// console.log(result);

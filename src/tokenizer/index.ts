@@ -1,28 +1,27 @@
+export const enum TokenType {
+    unknown,
+    space,
+    string,
+    identifier,
+    instruction,
+    number,
+    operator,
+    separator,
+    eol,
+    eof
+}
 
+export type TokenPosition = {
+    x: number,
+    y: number
+}
+
+export interface Token {
+    text: string,
+    pos: TokenPosition
+    type: TokenType
+}
 export namespace Tokenizer {
-    export const enum TokenType {
-        unknown,
-        space,
-        string,
-        identifier,
-        instruction,
-        number,
-        operator,
-        separator,
-        eol,
-        eof
-    }
-
-    export type TokenPosition = {
-        x: number,
-        y: number
-    }
-
-    export interface Token {
-        text: string,
-        pos: TokenPosition
-        type: TokenType
-    }
 
     const spaces = ' \t\r\n' as const;
     const separators = '\\:;[](){},.' as const;
@@ -35,6 +34,7 @@ export namespace Tokenizer {
             token.type = type;
 
         if (type === TokenType.operator && char === '-' && token.type === TokenType.identifier) { }
+        else if (type === TokenType.number && token.type === TokenType.identifier) { }
         else if (token.type === TokenType.separator || token.type !== type) {
             list.push(token);
             return { text: '', pos: { ...pos }, type: type };
@@ -45,7 +45,7 @@ export namespace Tokenizer {
 
     function charToType(char: string, props: IProps): TokenType {
         let type = TokenType.unknown;
-        
+
         switch (true) {
             case numbers.includes(char): return TokenType.number;
             case (props.separators || separators).includes(char): return TokenType.separator;
@@ -67,7 +67,7 @@ export namespace Tokenizer {
         separators?: string
     }
 
-    export function tokenizate(source: string, props: IProps = {spaces, operators, separators}): Token[] {
+    export function tokenizate(source: string, props: IProps = { spaces, operators, separators }): Token[] {
         let token: Token = { text: '', pos: { x: 1, y: 1 }, type: TokenType.eof };
         let result: Token[] = [];
         let pos: TokenPosition = { x: 1, y: 1 };
@@ -103,15 +103,13 @@ export namespace Tokenizer {
 
         result.push(token);
 
-        if(result.at(-1).type !== TokenType.eof)
-            result.push({text: '', type: TokenType.eof, pos: {x: 0,y: 0}});
+        if (result.at(-1).type !== TokenType.eof)
+            result.push({ text: '', type: TokenType.eof, pos });
 
         return result;
     }
-
-
 }
 
 // console.log(TinyML.Tokenizer.tokenizate(`w-      "- q
-// d"{wq} 
+// d"{wq}
 // wd`));

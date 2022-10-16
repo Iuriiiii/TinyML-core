@@ -1,24 +1,26 @@
 {
   "name": "tinyml-tokenizer",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "TinyML Tokenizer",
   "main": "index.js",
   "scripts": {
-    "test": "jest ./tests/index.ts --notify",
-    "build:core": "tsc --project tsconfig.json",
+    "build:test": "npm run build && jest",
+    "build:esnext": "tsc --project tsconfig.json",
+    "build:common": "tsc --project tsconfig.common.json",
+    "build": "npm run build:esnext && npm run build:common",
     "dev:tokenizer": "tsc-watch ./src/tokenizer/index.ts -outDir ./src/ --onSuccess \"node ./src/tokenizer/index.js\"",
-    "dev:core": "tsc-watch ./src/core/index.ts -outDir ./src/ --onSuccess \"node ./src/core/index.js\""
+    "dev:core": "tsc-watch ./src/core/index.ts -outDir ./src/ --onSuccess \"node ./src/core/index.js\"",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/jest": "^28.1.7",
+    "@types/jest": "^28.1.8",
     "assert": "^2.0.0",
-    "jest": "^28.1.3",
-    "mocha": "^10.0.0",
     "node-notifier": "^10.0.1",
     "nodemon": "^2.0.19",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "tsc-watch": "^5.0.3",

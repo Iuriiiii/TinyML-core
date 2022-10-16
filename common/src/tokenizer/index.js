@@ -1,4 +1,7 @@
-export var Tokenizer;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Tokenizer = void 0;
+var Tokenizer;
 (function (Tokenizer) {
     const spaces = ' \t\r\n';
     const separators = '\\:;[](){},.';
@@ -64,5 +67,5 @@ export var Tokenizer;
         return result;
     }
     Tokenizer.tokenizate = tokenizate;
-})(Tokenizer || (Tokenizer = {}));
+})(Tokenizer = exports.Tokenizer || (exports.Tokenizer = {}));
 //# sourceMappingURL=index.js.map

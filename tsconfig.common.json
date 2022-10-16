@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "module": "ESNext",
+        "module": "CommonJs",
         "target": "ESNext",
         "moduleResolution": "node",
         "experimentalDecorators": true,
@@ -10,6 +10,9 @@
         "preserveConstEnums": false,
         "sourceMap": true,
         "esModuleInterop": true,
+        "outDir": "./common",
+        "declaration": true,
+        "declarationDir": "./common",
         "lib": [
             "ESNext"
         ]

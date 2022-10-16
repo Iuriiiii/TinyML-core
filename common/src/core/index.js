@@ -1,5 +1,8 @@
-import { Tokenizer } from '../tokenizer';
-export var Core;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Core = void 0;
+const tokenizer_1 = require("../tokenizer");
+var Core;
 (function (Core) {
     function tokensToString(tokens) {
         return tokens.map(token => token.text).join('');
@@ -81,7 +84,7 @@ export var Core;
     }
     Core.Code = Code;
     function parse(source) {
-        const tokens = Tokenizer.tokenizate(source, {
+        const tokens = tokenizer_1.Tokenizer.tokenizate(source, {
             separators: '(){}[];:=,\\'
         });
         const tree = parseTokens(tokens);
@@ -239,5 +242,5 @@ export var Core;
             return result;
         }
     }
-})(Core || (Core = {}));
+})(Core = exports.Core || (exports.Core = {}));
 //# sourceMappingURL=index.js.map
