@@ -4,6 +4,10 @@ TinyML Core is a little, faster and lightweight module that will help you to par
 
 ❌ Please don't use until we delete this message, this lib is under construction 🚫
 
+## Installation
+
+    npm install tinyml-core
+
 ## Concept
 
 The structure pattern is similar to HTML, you will get tags, content, params and comments.
