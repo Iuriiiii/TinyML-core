@@ -1,6 +1,6 @@
 {
   "name": "tinyml-core",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "description": "TinyML-syntax parser",
   "main": "index.js",
   "scripts": {
@@ -12,9 +12,13 @@
     "dev:core": "tsc-watch ./src/core/index.ts -outDir ./src/ --onSuccess \"node ./src/core/index.js\"",
     "test": "jest"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Iuriiiii/TinyML-core.git"
+  },
+  "keywords": ["TinyML", "TypeScript"],
+  "author": "Iuriiiii",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "assert": "^2.0.0",
