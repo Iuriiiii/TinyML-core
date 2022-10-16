@@ -2,6 +2,8 @@
 
 TinyML Core is a little, faster and lightweight module that will help you to parse the source code of TinyML.
 
+❌ Please don't use until we delete this message, this lib is under construction 🚫
+
 ## Concept
 
 The structure pattern is similar to HTML, you will get tags, content, params and comments.
