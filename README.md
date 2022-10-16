@@ -110,10 +110,15 @@ try {
 The following members & methods will be inherited by `Core.Raw`, `Core.Element`, `Core.Comment` and `Core.Code`
 
 🔹 <b>tokens: Token[]</b> - All tokens catched for the instance.
+
 🔹 <b>isRaw(): boolean</b> - Checks if the instance is a `Core.Raw` instance.
+
 🔹 <b>isElement(): boolean</b> - Checks if the instance is a `Core.Element` instance.
+
 🔹 <b>isComment(): boolean</b> - Checks if the instance is a `Core.Comment` instance.
+
 🔹 <b>isCode(): boolean</b> - Checks if the instance is a `Core.Code` instance.
+
 🔹 <b>toString(): string</b> - A string representation of all tokens contained in the instance.
 
 ### The `Token` data type
