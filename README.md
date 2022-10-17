@@ -26,17 +26,17 @@ The structure pattern is similar to HTML, you will get tags, content, params and
     <head>
         <title>The page title</title>
     </head>
+    <body>
+        <hr/>
+        <div class="container">
+            <h1>My first title</h1>
+            <p>
+                Lorem ipsum dolor sit<br>
+                amet, consectetur
+            <p>
+        </div>
+    </body>
 </html>
-<body>
-    <hr/>
-    <div class="container">
-        <h1>My first title</h1>
-        <p>
-            Lorem ipsum dolor sit<br>
-            amet, consectetur
-        <p>
-    </div>
-</body>
 ```
 
 </td>
