@@ -157,7 +157,7 @@ export namespace Core {
 
     export function parse(source: string) {
         const tokens = Tokenizer.tokenizate(source, {
-            separators: '(){}[];:=,\\'
+            separators: '(){}[];:=,\\<>'
         });
 
         const tree = parseTokens(tokens);
@@ -250,7 +250,7 @@ export namespace Core {
                 if (context.keys || context.pure)
                     return error('Key closure expected', token);
 
-                break;
+                break f1;
             }
 
             d1: do {
@@ -272,8 +272,8 @@ export namespace Core {
                                     break d1;
                                 }
 
-                                pushRawIfNeeded(result, raws, true);
-                                raws = [];
+                                if (pushRawIfNeeded(result, raws, true))
+                                    raws = [];
                                 continue f1;
                             }
 
@@ -407,5 +407,6 @@ export namespace Core {
 
             return result;
         }
+
     }
 }

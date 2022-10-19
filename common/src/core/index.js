@@ -125,7 +125,7 @@ var Core;
     Core.Code = Code;
     function parse(source) {
         const tokens = tokenizer_1.Tokenizer.tokenizate(source, {
-            separators: '(){}[];:=,\\'
+            separators: '(){}[];:=,\\<>'
         });
         const tree = parseTokens(tokens);
         if (tree instanceof Error)
@@ -179,7 +179,7 @@ var Core;
                     return error('Bracket closure expected', token);
                 if (context.keys || context.pure)
                     return error('Key closure expected', token);
-                break;
+                break f1;
             }
             d1: do {
                 if (token.type === 7 /* TokenType.SEPARATOR */) {
@@ -195,8 +195,8 @@ var Core;
                                 if (--context.pure > 0) {
                                     break d1;
                                 }
-                                pushRawIfNeeded(result, raws, true);
-                                raws = [];
+                                if (pushRawIfNeeded(result, raws, true))
+                                    raws = [];
                                 continue f1;
                             }
                             break f1;
