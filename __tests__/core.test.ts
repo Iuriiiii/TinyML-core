@@ -1,36 +1,7 @@
-import { Core } from '../common';
-
-const example = {
-    params: 'html(param1){}',
-    example1: `
-This is a raw content
-html{
-    This is another raw content
-    head(lang="es") {
-        title { Hola Mundo }
-    }
-    This is raw content again
-}
-Ends with raw content
-`,
-    comment1: `
-    [ This is a comment {} ]
-`,
-    code1: `
-    html{this is raw or should be;p{adsad} is a code}
-`,
-    escape1: "\\{All this content should be raw\\}[qw\\d{qw}}d { \"q\"wd]\\[dark Content!!!\\]",
-    errors: ['{', '}', '[', ']', 'html([]){}', 'html({}){}', '"', 'html{this is raw or should be;p{adsad} is a code}}'],
-    short1: `
-    hr;
-    hr;head{Code}
-`
-};
-
-
+import { Core, TokenType } from '../common';
 
 describe('Core general tests', () => {
-    const tml = Core.parse(example.params);
+    const tml = Core.parse('html(param1){}');
 
     test('The return type should be an Array', () => {
         expect(tml).toBeInstanceOf(Array);
@@ -63,7 +34,17 @@ describe('Core general tests', () => {
 });
 
 describe('Intensive tests', () => {
-    const tml = Core.parse(example.example1);
+    const tml = Core.parse(`
+This is a raw content
+html{
+    This is another raw content
+    head(lang="es") {
+        title { Hola Mundo }
+    }
+    This is raw content again
+}
+Ends with raw content
+`);
     const html = tml[1] as Core.Element;
     const head = html.children![1] as Core.Element;
     const title = head.children![1] as Core.Element;
@@ -111,7 +92,9 @@ describe('Intensive tests', () => {
 });
 
 describe('Comment tests', () => {
-    const tml = Core.parse(example.comment1);
+    const tml = Core.parse(`
+    [ This is a comment {} ]
+`);
 
     test('2nd item should be instance of Core.Comment', () => {
         expect(tml[1]).toBeInstanceOf(Core.Comment);
@@ -123,7 +106,7 @@ describe('Comment tests', () => {
 });
 
 describe('Escape tests', () => {
-    const tml = Core.parse(example.escape1);
+    const tml = Core.parse("\\{All this content should be raw\\}[qw\\d{qw}}d { \"q\"wd]\\[dark Content!!!\\]");
 
     test('1st item should be instance of Core.Raw', () => {
         expect(tml[0]).toBeInstanceOf(Core.Raw);
@@ -152,14 +135,19 @@ describe('Escape tests', () => {
 });
 
 describe('Errors', () => {
-    test('All code examples should be throw error', async () => {
-        for (let i = 0; i < example.errors.length; i++)
-            expect(() => Core.parse(example.errors[i])).toThrow(Error);
+    const errors = ['{', '}', '[', ']', 'html([]){}', 'html({}){}', '"', 'html{this is raw or should be;p{adsad} is a code}}'];
+
+    test('All code examples should be throw error', () => {
+        for (let i = 0; i < errors.length; i++)
+            expect(() => Core.parse(errors[i])).toThrowError();
     });
 });
 
 describe('Short syntax', () => {
-    const tml = Core.parse(example.short1);
+    const tml = Core.parse(`
+    hr;
+    hr;head{Code}
+`);
 
     test('1st hr should be an element', () => {
         const hr = tml[1];
@@ -179,5 +167,37 @@ describe('Short syntax', () => {
 
         expect(head).toBeInstanceOf(Core.Element);
         expect(head.get<Core.Element>().children!.length).toBeGreaterThanOrEqual(1);
+    });
+});
+
+describe('Code elements test', () => {
+    const tml = Core.parse('{qwijdbqwjdbqwjkdqw} html{raw content}');
+
+    test('1st element should be instance of Core.Code', () => {
+        expect(tml[0]).toBeInstanceOf(Core.Code);
+    });
+
+    test('1st element should contain "qwijdbqwjdbqwjkdqw"', () => {
+        expect(tml[0].toString()).toBe('qwijdbqwjdbqwjkdqw');
+    });
+
+    test('2nd element should be type space', () => {
+        expect(tml[1].tokens![0].type).toBe(TokenType.SPACE);
+    });
+
+    test('3rd element should be instance of Core.Element', () => {
+        expect(tml[2]).toBeInstanceOf(Core.Element);
+    });
+
+    test('3rd element tag should be "html"', () => {
+        expect(tml[2].get<Core.Element>().tag.text).toBe('html');
+    });
+
+    test('3rd element child should be instance of Core.Raw', () => {
+        expect(tml[2].get<Core.Element>().children![0]).toBeInstanceOf(Core.Raw);
+    });
+
+    test('3rd element child text should be "raw content"', () => {
+        expect(tml[2].get<Core.Element>().children![0].toString()).toBe('raw content');
     });
 });

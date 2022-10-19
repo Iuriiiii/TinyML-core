@@ -27,6 +27,7 @@ The structure pattern is similar to HTML, you will get tags, content, params and
         <title>The page title</title>
     </head>
     <body>
+        <!-- This is a comment -->
         <hr/>
         <div class="container">
             <h1>My first title</h1>
@@ -43,12 +44,13 @@ The structure pattern is similar to HTML, you will get tags, content, params and
 <td>
 
 ```
-[This is just a comment]
+{!DOCTYPE html}
 html(lang="en") {
     head {
         title {The page title}
     }
     body {
+        [ This is a comment ]
         hr;
         div(class="container") {
             h1 {My first title}
@@ -86,7 +88,7 @@ html(lang="en") {
 ##### Example:
 
 ```js
-import { Core } from 'tinyml-core';
+import { Core } from 'tinyml-core/common';
 
 try {
     var parsed = Core.parse(`
@@ -158,3 +160,38 @@ This data type different to `Core.Element` element, generally the content of thi
 This data type defines the content between `[` and `]` characters.
 
 > Does not contain new methods or members by itself.
+
+### Core.Code
+
+This data type defines the content between unnamed `{` and `}` characters.
+
+> Does not contain new methods or members by itself.
+
+####
+
+<table>
+<tr>
+<th>Named Block</th>
+<th>Unnamed Block</th>
+</tr>
+<tr>
+<td>
+
+```
+namedBlock {
+    content of named block
+}
+```
+
+</td>
+<td>
+
+```
+{
+    content of unnamed block
+}
+```
+
+</td>
+</tr>
+</table>

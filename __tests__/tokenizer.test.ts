@@ -10,38 +10,63 @@ describe('Return Types', () => {
     });
 });
 
+describe('Token Tests', () => {
+    const tokens = Tokenizer.tokenizate('{"hola mundo"} How are you');
+
+    test('1st token should be a separator', () => {
+        expect(tokens[0].type).toBe(TokenType.SEPARATOR);
+    });
+
+    test('2nd token should be a string', () => {
+        expect(tokens[1].type).toBe(TokenType.STRING);
+    });
+    
+    test('3rd token should be a string', () => {
+        expect(tokens[2].type).toBe(TokenType.SEPARATOR);
+    });
+
+    
+    test('4th token should be a space', () => {
+        expect(tokens[3].type).toBe(TokenType.SPACE);
+    });
+    
+    test('5th token should be a identifier', () => {
+        expect(tokens[4].type).toBe(TokenType.IDENTIFIER);
+    });
+});
+
 
 describe('Token Types', () => {
     test('Tokenizer should return just an eof token', () => {
-        expect(Tokenizer.tokenizate('')[0].type === TokenType.eof).toBe(true);
+        expect(Tokenizer.tokenizate('')[0].type === TokenType.EOF).toBe(true);
     });
 
     test('Tokenizer should return just an number token', () => {
-        expect(Tokenizer.tokenizate('1')[0].type === TokenType.number).toBe(true);
+        expect(Tokenizer.tokenizate('1')[0].type === TokenType.NUMBER).toBe(true);
     });
 
     test('Tokenizer should return just an identifier token', () => {
-        expect(Tokenizer.tokenizate('a')[0].type === TokenType.identifier).toBe(true);
+        expect(Tokenizer.tokenizate('a')[0].type === TokenType.IDENTIFIER).toBe(true);
     });
 
     test('Tokenizer should return just an eol token', () => {
-        expect(Tokenizer.tokenizate('\n')[0].type === TokenType.eol).toBe(true);
+        expect(Tokenizer.tokenizate('\n')[0].type === TokenType.EOL).toBe(true);
     });
 
     test('Tokenizer should return just an separator token', () => {
-        expect(Tokenizer.tokenizate('[')[0].type === TokenType.separator).toBe(true);
+        expect(Tokenizer.tokenizate('[')[0].type === TokenType.SEPARATOR).toBe(true);
     });
 
     test('Tokenizer should return just an operator token', () => {
-        expect(Tokenizer.tokenizate('+')[0].type === TokenType.operator).toBe(true);
+        expect(Tokenizer.tokenizate('+')[0].type === TokenType.OPERATOR).toBe(true);
     });
 
     test('Tokenizer should return just an space token', () => {
-        expect(Tokenizer.tokenizate('   ')[0].type === TokenType.space).toBe(true);
+        expect(Tokenizer.tokenizate('   ')[0].type === TokenType.SPACE).toBe(true);
     });
 
     test('Tokenizer should return just an string token', () => {
-        expect(Tokenizer.tokenizate('"This is a string"')[0].type === TokenType.string).toBe(true);
+        expect(Tokenizer.tokenizate('"This is a string"')[0].type === TokenType.STRING).toBe(true);
     });
 });
 

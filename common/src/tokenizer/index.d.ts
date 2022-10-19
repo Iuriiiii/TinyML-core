@@ -1,14 +1,14 @@
 export declare const enum TokenType {
-    unknown = 0,
-    space = 1,
-    string = 2,
-    identifier = 3,
-    instruction = 4,
-    number = 5,
-    operator = 6,
-    separator = 7,
-    eol = 8,
-    eof = 9
+    UNKNOWN = 0,
+    SPACE = 1,
+    STRING = 2,
+    IDENTIFIER = 3,
+    INSTRUCTION = 4,
+    NUMBER = 5,
+    OPERATOR = 6,
+    SEPARATOR = 7,
+    EOL = 8,
+    EOF = 9
 }
 export declare type TokenPosition = {
     x: number;

@@ -23,16 +23,16 @@ SOFTWARE.
 */
 
 export const enum TokenType {
-    unknown,
-    space,
-    string,
-    identifier,
-    instruction,
-    number,
-    operator,
-    separator,
-    eol,
-    eof
+    UNKNOWN,
+    SPACE,
+    STRING,
+    IDENTIFIER,
+    INSTRUCTION,
+    NUMBER,
+    OPERATOR,
+    SEPARATOR,
+    EOL,
+    EOF
 }
 
 export type TokenPosition = {
@@ -54,12 +54,12 @@ export namespace Tokenizer {
     const characters = 'abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ' as const;
 
     function resizeIf(list: Token[], token: Token, type: TokenType, char: string, pos: TokenPosition): Token {
-        if (token.type === TokenType.eof)
-            token.type = type;
+        if (token.type === TokenType.EOF)
+            return {...token, text: '', type};
 
-        if (type === TokenType.operator && char === '-' && token.type === TokenType.identifier) { }
-        else if (type === TokenType.number && token.type === TokenType.identifier) { }
-        else if (token.type === TokenType.separator || token.type !== type) {
+        if (type === TokenType.OPERATOR && char === '-' && token.type === TokenType.IDENTIFIER) { }
+        else if (type === TokenType.NUMBER && token.type === TokenType.IDENTIFIER) { }
+        else if (token.type === TokenType.SEPARATOR || token.type !== type) {
             list.push(token);
             return { text: '', pos: { ...pos }, type: type };
         } else if (token.type === type) { }
@@ -68,18 +68,18 @@ export namespace Tokenizer {
     }
 
     function charToType(char: string, props: IProps): TokenType {
-        let type = TokenType.unknown;
+        let type = TokenType.UNKNOWN;
 
         switch (true) {
-            case numbers.includes(char): return TokenType.number;
-            case (props.separators || separators).includes(char): return TokenType.separator;
-            case (props.operators || operators).includes(char): return TokenType.operator;
-            case characters.includes(char): return TokenType.identifier;
+            case numbers.includes(char): return TokenType.NUMBER;
+            case (props.separators || separators).includes(char): return TokenType.SEPARATOR;
+            case (props.operators || operators).includes(char): return TokenType.OPERATOR;
+            case characters.includes(char): return TokenType.IDENTIFIER;
             case (props.spaces || spaces).includes(char):
                 if (char === '\n')
-                    return TokenType.eol;
+                    return TokenType.EOL;
                 else
-                    return TokenType.space;
+                    return TokenType.SPACE;
         }
 
         return type;
@@ -92,11 +92,11 @@ export namespace Tokenizer {
     }
 
     export function tokenizate(source: string, props: IProps = { spaces, operators, separators }): Token[] {
-        let token: Token = { text: '', pos: { x: 1, y: 1 }, type: TokenType.eof };
+        let token: Token = { text: 'EOF', pos: { x: 1, y: 1 }, type: TokenType.EOF };
         let result: Token[] = [];
         let pos: TokenPosition = { x: 1, y: 1 };
         let isString = false;
-        let type = TokenType.unknown;
+        let type = TokenType.UNKNOWN;
 
         for (let i = 0; i < source.length; i++) {
             let char = source[i];
@@ -104,15 +104,15 @@ export namespace Tokenizer {
             switch (true) {
                 case char === '"':
                     if (isString = !isString)
-                        token = resizeIf(result, token, TokenType.string, char, pos);
+                        token = resizeIf(result, token, TokenType.STRING, char, pos);
 
                     break;
                 case isString:
                     break;
-                case (type = charToType(char, props)) > TokenType.unknown:
+                case (type = charToType(char, props)) > TokenType.UNKNOWN:
                     // The next line is due to a TypeScript bug
                     // @ts-ignore
-                    if (type === TokenType.eol)
+                    if (type === TokenType.EOL)
                         pos.y++, pos.x = 1;
 
                     token = resizeIf(result, token, type, char, pos);
@@ -127,13 +127,9 @@ export namespace Tokenizer {
 
         result.push(token);
 
-        if (result.at(-1).type !== TokenType.eof)
-            result.push({ text: '', type: TokenType.eof, pos });
+        if (result.at(-1).type !== TokenType.EOF)
+            result.push({ text: 'EOF', type: TokenType.EOF, pos });
 
         return result;
     }
 }
-
-// console.log(TinyML.Tokenizer.tokenizate(`w-      "- q
-// d"{wq}
-// wd`));

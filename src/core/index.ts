@@ -198,11 +198,11 @@ export namespace Core {
         pure: number
     }
 
-    function pushRawIfNeeded(stack: Item[], raws: Token[]): boolean {
+    function pushRawIfNeeded(stack: Item[], raws: Token[], asCode: boolean = false): boolean {
         if (raws.length === 0)
             return false;
 
-        stack.push(new Raw(raws));
+        stack.push(asCode ? new Code(raws) : new Raw(raws));
 
         return true;
     }
@@ -210,7 +210,7 @@ export namespace Core {
     function stringHasInvalidFormat(tokens: Token[]): boolean {
         const last = tokens.at(-1);
 
-        if (!last || last.type !== TokenType.string)
+        if (!last || last.type !== TokenType.STRING)
             return false;
         else if (last.text.length <= 1)
             return true;
@@ -220,56 +220,65 @@ export namespace Core {
     }
 
     function tokenIsIdentifierOrInstruction(token?: Token) {
-        return token && (token.type === TokenType.identifier || token.type === TokenType.instruction);
+        return token && (token.type === TokenType.IDENTIFIER || token.type === TokenType.INSTRUCTION);
     }
 
     function parseTokens(tokens: Token[], context: IContext = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 }): Item[] | Error {
         if (tokens.length === 0)
             return [];
 
-        // console.log(tokens);
-
-        const result: Item[] = [], start: number = context.i;
         let lastNonSpaceToken: Token | undefined,
+            result: Item[] = [],
             lastNonSpaceTokenIndex: number = Number.MAX_SAFE_INTEGER,
             raws: Token[] = [],
             params: Token[] | undefined,
             comments: Token[] | undefined,
-            token: Token;
+            token: Token,
+            wasPure: boolean = false;
 
         f1: for (; context.i < tokens.length; context.i++) {
             const i = context.i;
             token = tokens[context.i];
 
-            if (token.type === TokenType.eof) {
+            if (token.type === TokenType.EOF) {
                 if (context.parentheses)
                     return error('Parenthese closure expected', token);
 
                 if (context.brackets)
                     return error('Bracket closure expected', token);
 
-                if (context.keys)
+                if (context.keys || context.pure)
                     return error('Key closure expected', token);
 
                 break;
             }
 
-            if (token.type === TokenType.separator && token.text === '}' && context.brackets === 0) {
-                context.keys--;
-                break;
-            }
+            d1: do {
+                if (token.type === TokenType.SEPARATOR) {
+                    if (
+                        context.brackets > 0 && !'[]'.includes(token.text) ||
+                        context.pure > 0 && !'{}'.includes(token.text)
+                    )
+                        break d1;
 
-
-            /* This while just execute once, its needed to fasty code breaks */
-            w1: while (context.pure === 0) {
-                if (token.type === TokenType.separator) {
                     const isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
 
                     switch (token.text) {
-                        case ';':
-                            if (context.brackets)
-                                break;
+                        case '}':
+                            if (context.pure === 0)
+                                context.keys--;
+                            else {
+                                if (--context.pure > 0) {
+                                    break d1;
+                                }
 
+                                pushRawIfNeeded(result, raws, true);
+                                raws = [];
+                                continue f1;
+                            }
+
+                            break f1;
+                        case ';':
                             const left = tokenIsIdentifierOrInstruction(tokens[i - 1]);
                             const right = tokenIsIdentifierOrInstruction(tokens[i + 1]);
 
@@ -292,19 +301,13 @@ export namespace Core {
 
                             continue f1;
                         case '\\':
-                            if (context.brackets)
-                                break;
-
-                            if (!(tokens[++context.i].type === TokenType.separator))
+                            if (!(tokens[++context.i].type === TokenType.SEPARATOR))
                                 context.i--;
 
                             token = tokens[context.i];
                             break;
                         case '(':
-                            if (context.brackets)
-                                break;
-
-                            if (context.parentheses)
+                            if (context.parentheses > 0)
                                 return error('Invalid token', token);
 
                             params = [];
@@ -315,9 +318,6 @@ export namespace Core {
 
                             break;
                         case ')':
-                            if (context.brackets)
-                                break;
-
                             if (--context.parentheses < 0)
                                 return error('Invalid token', token);
 
@@ -326,21 +326,18 @@ export namespace Core {
 
                             break;
                         case '[':
-                            if (context.parentheses)
+                            if (context.parentheses > 0)
                                 return error('Invalid token', token);
 
                             comments = [];
                             /* Skips the first '[' */
                             if (context.brackets++ === 0)
                                 continue f1;
-                            // console.log('[');
 
                             break;
                         case ']':
-                            if (--context.brackets < 0 || context.parentheses)
+                            if (--context.brackets < 0 || context.parentheses > 0)
                                 return error('Invalid token', token);
-
-                            // console.log(context.brackets);
 
                             /* Skip the last ']' */
                             if (context.brackets === 0) {
@@ -353,50 +350,46 @@ export namespace Core {
 
                             break;
                         case '{':
-                            if (context.brackets > 0)
-                                break;
-
-                            if (context.parentheses)
+                            if (context.parentheses > 0)
                                 return error('Invalid token', token);
 
-                            context.i++;
-                            context.keys++;
+                            if (isPure) {
+                                if (++context.pure === 1)
+                                    continue f1;
 
-                            if (isPure)
-                                context.pure++;
-                            else
-                                raws = raws.slice(0, lastNonSpaceTokenIndex);
-                            // console.log('>>>', raws, lastNonSpaceTokenIndex);
+                                break d1;
+                            } else
+                                context.keys++, raws = raws.slice(0, lastNonSpaceTokenIndex);
+
+                            context.i++;
+
                             if (pushRawIfNeeded(result, raws))
                                 raws = [];
 
                             const children = parseTokens(tokens, context);
 
-                            if (context.pure > 0)
-                                context.pure--;
-
                             if (children instanceof Error)
-                                return children as Error;
+                                return children;
 
-                            result.push(context.pure ? children[0] : new Element(lastNonSpaceToken, children, params));
+                            result.push(new Element(lastNonSpaceToken, children, params));
 
                             continue f1;
                     }
 
                 }
-                break;
-            }
+            } while (false);
 
             (
+                context.pure && raws ||
                 context.brackets && comments ||
                 context.parentheses && params ||
                 raws
             ).push(token);
 
             if (
-                (context.parentheses + context.brackets) === 0 &&
-                token.type !== TokenType.space &&
-                token.type !== TokenType.eol
+                (context.parentheses + context.brackets + context.pure) === 0 &&
+                token.type !== TokenType.SPACE &&
+                token.type !== TokenType.EOL
             )
                 lastNonSpaceToken = token, lastNonSpaceTokenIndex = raws.length - 1;
         }
@@ -404,14 +397,11 @@ export namespace Core {
         if (context.keys < 0)
             return error('Invalid token', token);
 
-        if (context.pure > 0) {
-            return [new Code(raws)];
-        }
-
         pushRawIfNeeded(result, raws);
 
         if (result.length > 0) {
             const lastItem = result.at(-1);
+
             if (lastItem.isRaw() && stringHasInvalidFormat(lastItem.tokens))
                 return error('Infinite string detected', lastItem.tokens.at(-1));
 
@@ -419,48 +409,3 @@ export namespace Core {
         }
     }
 }
-
-// let source = {
-//     params: 'html(param1){}',
-//     source1: ` a thisisaTag(){
-//         t html { q}
-//         THIs is a raw ctext
-//     }
-//     `,
-//     source2: `
-
-//             title { Hola Mundo }
-
-//     `,
-//     source3: `
-//     [ This is a comment {} ]
-// `,
-//     source4: '\\{This is a raw content\\}',
-//     source5: `
-//     [ This is a comment {} ]
-// `,
-//     source6: `
-// body {
-//     header {
-//         h1 { E-Commerce } div {
-
-//         }
-//     }
-// }
-// `
-// };
-
-// const tree = Core.parse(source.source6);
-
-// console.log(JSON.stringify(tree, undefined, ' '));
-
-/*
-a <thisisaTag>
-    t html { q}
-</thisisaTag>
-*/
-
-// let result = Core.compile(source).toString();
-
-
-// console.log(result);
