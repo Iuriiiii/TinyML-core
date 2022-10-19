@@ -44,7 +44,7 @@ The structure pattern is similar to HTML, you will get tags, content, params and
 <td>
 
 ```
-{!DOCTYPE html}
+{<!DOCTYPE html>}
 html(lang="en") {
     head {
         title {The page title}
@@ -55,7 +55,7 @@ html(lang="en") {
         div(class="container") {
             h1 {My first title}
             p {
-                Lorem ipsum dolor sit\n
+                Lorem ipsum dolor sit;br;
                 amet, consectetur
             }
         }
