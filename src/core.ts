@@ -589,9 +589,8 @@ export namespace Core {
                 return error("Invalid token", token);
               }
 
-              comments = [];
-
               if (context.brackets++ === 0) {
+                comments = [];
                 continue f1;
               }
 

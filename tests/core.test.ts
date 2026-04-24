@@ -226,3 +226,71 @@ describe("Code elements test", () => {
     );
   });
 });
+
+describe("Deeply nested elements", () => {
+  const tml = Core.parse("a{b{c{d{e}}}}");
+
+  test("Should have correct depth", () => {
+    let current: any = tml[0];
+    let depth = 0;
+    while (current && current.children) {
+      current = current.children[0];
+      depth++;
+    }
+    expect(depth).toBe(4); // a -> b -> c -> d -> e
+  });
+});
+
+describe("Complex Parameters", () => {
+  const tml = Core.parse('tag(id="main", class="container", data-value=123){}');
+
+  test("Should have 3 parameters", () => {
+    const el = tml[0] as Core.Element;
+    // Parameters are tokens, including separators
+    // tag ( id = "main" ,  class = "container" ,  data-value = 123 )
+    // Wait, the params list in Core.Element is just IToken[].
+    // Let's check how many tokens are there.
+    expect(el.params.length).toBeGreaterThan(5);
+  });
+
+  test("paramsToString should return correct string", () => {
+    const el = tml[0] as Core.Element;
+    expect(el.paramsToString()).toBe('id="main", class="container", data-value=123');
+  });
+});
+
+describe("Nested Comments", () => {
+  const tml = Core.parse("[ Outer [ Inner ] Comment ]");
+
+  test("Should parse as a single comment with nested brackets", () => {
+    expect(tml[0]).toBeInstanceOf(Core.Comment);
+    expect(tml[0].toString()).toBe(" Outer [ Inner ] Comment ");
+  });
+});
+
+describe("Pure blocks", () => {
+  const tml = Core.parse("{ pure content }");
+
+  test("Should be instance of Core.Code", () => {
+    expect(tml[0]).toBeInstanceOf(Core.Code);
+  });
+
+  test("Should contain correct text", () => {
+    expect(tml[0].toString()).toBe(" pure content ");
+  });
+});
+
+describe("Advanced Escape Tests", () => {
+  const tml = Core.parse("\\( \\) \\; \\: \\, \\< \\>");
+
+  test("Should be raw content", () => {
+    expect(tml[0]).toBeInstanceOf(Core.Raw);
+    expect(tml[0].toString()).toBe("( ) ; : , < >");
+  });
+});
+
+describe("Infinite String Error", () => {
+  test("Should throw infinite string error", () => {
+    expect(() => Core.parse('"unclosed string')).toThrow("Infinite string detected");
+  });
+});

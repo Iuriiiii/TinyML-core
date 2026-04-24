@@ -94,3 +94,41 @@ describe("Token Positions", () => {
     expect(tokens[2].pos.x).toBe(9);
   });
 });
+
+describe("Advanced Tokenization", () => {
+  test("Should handle identifiers with dashes and numbers", () => {
+    const tokens = Tokenizer.tokenizate("my-var-123");
+    expect(tokens[0].type).toBe(TokenType.IDENTIFIER);
+    expect(tokens[0].text).toBe("my-var-123");
+  });
+
+  test("Should handle multiple operators", () => {
+    const tokens = Tokenizer.tokenizate("++ != ==");
+    expect(tokens[0].type).toBe(TokenType.OPERATOR);
+    expect(tokens[0].text).toBe("++");
+    expect(tokens[2].type).toBe(TokenType.OPERATOR);
+    expect(tokens[2].text).toBe("!=");
+    expect(tokens[4].type).toBe(TokenType.OPERATOR);
+    expect(tokens[4].text).toBe("==");
+  });
+
+  test("Should handle Spanish characters in identifiers", () => {
+    const tokens = Tokenizer.tokenizate("mañana acción");
+    expect(tokens[0].type).toBe(TokenType.IDENTIFIER);
+    expect(tokens[0].text).toBe("mañana");
+    expect(tokens[2].type).toBe(TokenType.IDENTIFIER);
+    expect(tokens[2].text).toBe("acción");
+  });
+
+  test("Should handle unknown characters as unknown type", () => {
+    const tokens = Tokenizer.tokenizate("🚀");
+    expect(tokens[0].type).toBe(TokenType.UNKNOWN);
+    expect(tokens[0].text).toBe("🚀");
+  });
+
+  test("Should handle empty strings correctly", () => {
+    const tokens = Tokenizer.tokenizate("");
+    expect(tokens.length).toBe(1);
+    expect(tokens[0].type).toBe(TokenType.EOF);
+  });
+});

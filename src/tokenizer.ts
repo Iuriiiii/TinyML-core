@@ -294,6 +294,14 @@ export namespace Tokenizer {
               currentPos.x++;
               continue;
             }
+
+            currentToken = resizeIf({
+              list: result,
+              currentToken,
+              targetType: TokenType.UNKNOWN,
+              char,
+              pos: currentPos,
+            });
           }
           break;
         }
