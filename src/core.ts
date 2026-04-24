@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import { Token, Tokenizer, TokenPosition, TokenType } from "./tokenizer.ts";
+import { type IToken, Tokenizer, TokenType } from "./tokenizer.ts";
 
 /*
     a (); [ No tag ]
@@ -43,87 +43,206 @@ html {
 */
 
 export namespace Core {
+  /**
+   * Represents a core element in the TinyML structure.
+   */
   interface IElement {
-    tag: Token;
-    params?: Token[];
+    /**
+     * The token identifying the tag.
+     */
+    tag: IToken;
+
+    /**
+     * The parameters associated with the element.
+     */
+    params?: IToken[];
+
+    /**
+     * The child items of the element.
+     */
     children?: Item[];
   }
 
-  function tokensToString(tokens: Token[] | undefined): string {
-    if (!tokens) return "";
-    return tokens.map((token) => token.text).join("");
+  /**
+   * Converts a list of tokens to its string representation.
+   */
+  function tokensToString(tokens: IToken[] | undefined): string {
+    if (!tokens) {
+      return "";
+    }
+
+    const text = tokens.map((token) => {
+      return token.text;
+    }).join("");
+
+    return text;
   }
 
+  /**
+   * Type flags for elemental objects.
+   */
   interface ITypes {
-    isRaw: () => boolean;
-    isElement: () => boolean;
-    isComment: () => boolean;
-    isCode: () => boolean;
+    /**
+     * Checks if the element is raw text.
+     */
+    isRaw(): boolean;
+
+    /**
+     * Checks if the element is a structured element.
+     */
+    isElement(): boolean;
+
+    /**
+     * Checks if the element is a comment.
+     */
+    isComment(): boolean;
+
+    /**
+     * Checks if the element is code.
+     */
+    isCode(): boolean;
   }
 
+  /**
+   * Boolean representation of the types flags.
+   */
   type ITypesAsBoolean = {
     [Property in keyof ITypes]: boolean;
   };
+
+  /**
+   * Represents an object that can be converted to string and has type flags.
+   */
   interface IElemental extends ITypes {
-    tokens: Token[] | undefined;
-    toString: () => string;
+    /**
+     * The tokens that compose the elemental.
+     */
+    tokens: IToken[] | undefined;
+
+    /**
+     * Converts the elemental to string.
+     */
+    toString(): string;
   }
 
   class Elemental implements IElemental {
-    tokens: Token[] | undefined;
-    isRaw: () => boolean;
-    isElement: () => boolean;
-    isComment: () => boolean;
-    isCode: () => boolean;
+    /**
+     * The tokens that compose the elemental.
+     */
+    tokens: IToken[] | undefined;
 
-    constructor(types: ITypesAsBoolean, tokens?: Token[]) {
+    /**
+     * Internal string cache.
+     */
+    private string: string | undefined;
+
+    /**
+     * Internal flags for types.
+     */
+    private types: ITypesAsBoolean;
+
+    constructor(types: ITypesAsBoolean, tokens?: IToken[]) {
       this.tokens = tokens;
-      this.isRaw = () => types.isRaw;
-      this.isElement = () => types.isElement;
-      this.isComment = () => types.isComment;
-      this.isCode = () => types.isCode;
+      this.types = types;
     }
 
-    string: string | undefined;
+    /**
+     * Checks if the element is raw text.
+     */
+    isRaw(): boolean {
+      return this.types.isRaw;
+    }
 
+    /**
+     * Checks if the element is a structured element.
+     */
+    isElement(): boolean {
+      return this.types.isElement;
+    }
+
+    /**
+     * Checks if the element is a comment.
+     */
+    isComment(): boolean {
+      return this.types.isComment;
+    }
+
+    /**
+     * Checks if the element is code.
+     */
+    isCode(): boolean {
+      return this.types.isCode;
+    }
+
+    /**
+     * Converts the elemental to string.
+     */
     toString(): string {
-      if (this.string === undefined) {
+      const isCached = this.string !== undefined;
+
+      if (!isCached) {
         this.string = tokensToString(this.tokens);
       }
 
-      return this.string;
+      return this.string as string;
     }
 
+    /**
+     * Returns the elemental casted to a specific type.
+     */
     get<T extends Element | Raw | Code | Comment>(): T {
-      /* @ts-ignore */
+      // @ts-ignore: [BY-AI] Casting 'this' to T is safe here as it's intended to be used with the correct type check before.
       return this as T;
     }
   }
 
+  /**
+   * Represents a structured element.
+   */
   export class Element extends Elemental implements IElement {
-    tag: Token;
-    params: Token[];
+    /**
+     * The token identifying the tag.
+     */
+    tag: IToken;
+
+    /**
+     * The parameters associated with the element.
+     */
+    params: IToken[];
+
+    /**
+     * The child items of the element.
+     */
     children?: Item[];
 
-    constructor(tag: Token, children?: Item[], params: Token[] = []) {
+    constructor(tag: IToken, children?: Item[], params: IToken[] = []) {
       super({
         isCode: false,
         isComment: false,
         isElement: true,
         isRaw: false,
       });
+
       this.tag = tag;
       this.children = children;
       this.params = params;
     }
 
+    /**
+     * Converts the parameters to string.
+     */
     paramsToString(): string {
-      return tokensToString(this.params);
+      const text = tokensToString(this.params);
+
+      return text;
     }
   }
 
+  /**
+   * Represents a comment block.
+   */
   export class Comment extends Elemental {
-    constructor(tokens: Token[]) {
+    constructor(tokens: IToken[]) {
       super({
         isCode: false,
         isComment: true,
@@ -133,8 +252,11 @@ export namespace Core {
     }
   }
 
+  /**
+   * Represents raw text.
+   */
   export class Raw extends Elemental {
-    constructor(tokens: Token[]) {
+    constructor(tokens: IToken[]) {
       super({
         isCode: false,
         isComment: false,
@@ -144,8 +266,11 @@ export namespace Core {
     }
   }
 
+  /**
+   * Represents a code block.
+   */
   export class Code extends Elemental {
-    constructor(tokens: Token[]) {
+    constructor(tokens: IToken[]) {
       super({
         isCode: true,
         isComment: false,
@@ -155,135 +280,201 @@ export namespace Core {
     }
   }
 
+  /**
+   * Parses the source code into a tree of items.
+   */
   export function parse(source: string) {
     const tokens = Tokenizer.tokenizate(source, {
       separators: "(){}[];:=,\\<>",
     });
 
     const tree = parseTokens(tokens);
+    const isError = tree instanceof Error;
 
-    if (tree instanceof Error) {
+    if (isError) {
       throw tree;
     }
 
-    return tree || [];
+    const result = tree || [];
+
+    return result;
   }
 
-  // function getLastToken(tokens: Token[]): Token | undefined {
-  //     if (tokens.length === 0)
-  //         return;
+  /**
+   * Creates a descriptive error.
+   */
+  function error(description: string, token: IToken): Error {
+    const message = `${description} at ${token.pos.y}:${token.pos.x}`;
+    const errorInstance = new Error(message);
 
-  //     const nonSpaceTokens = tokens.filter((token) =>
-  //         token.type !== TokenType.space &&
-  //         token.type !== TokenType.eol &&
-  //         token.type !== TokenType.eof
-  //     );
-
-  //     if (nonSpaceTokens.length === 0)
-  //         return;
-
-  //     return nonSpaceTokens.at(-1);
-  // }
-
-  function error(description: string, token: Token): Error {
-    return new Error(description + ` at ${token.pos.y}:${token.pos.x}`);
+    return errorInstance;
   }
 
+  /**
+   * Represents a possible item in the tree.
+   */
   export type Item = Element | Comment | Raw | Code;
 
+  /**
+   * Parsing context to track nesting.
+   */
   interface IContext {
+    /**
+     * Current token index.
+     */
     i: number;
+
+    /**
+     * Parentheses nesting level.
+     */
     parentheses: number;
+
+    /**
+     * Keys nesting level.
+     */
     keys: number;
+
+    /**
+     * Brackets nesting level.
+     */
     brackets: number;
+
+    /**
+     * Pure block nesting level.
+     */
     pure: number;
   }
 
+  /**
+   * Pushes a raw or code item to the stack if there are tokens.
+   */
   function pushRawIfNeeded(
     stack: Item[],
-    raws: Token[],
+    raws: IToken[],
     asCode: boolean = false,
   ): boolean {
-    if (raws.length === 0) {
+    const isRawsEmpty = raws.length === 0;
+
+    if (isRawsEmpty) {
       return false;
     }
 
-    stack.push(asCode ? new Code(raws) : new Raw(raws));
+    const item = asCode ? new Code(raws) : new Raw(raws);
+    stack.push(item);
 
     return true;
   }
 
-  function stringHasInvalidFormat(tokens: Token[]): boolean {
-    const last = tokens.at(-1);
+  /**
+   * Checks if a string has an invalid format (e.g., missing closing quote).
+   */
+  function stringHasInvalidFormat(tokens: IToken[]): boolean {
+    const lastToken = tokens.at(-1);
+    const isLastTokenString = lastToken && lastToken.type === TokenType.STRING;
 
-    if (!last || last.type !== TokenType.STRING) {
+    if (!isLastTokenString) {
       return false;
-    } else if (last.text.length <= 1) {
+    }
+
+    const lastTokenText = lastToken.text;
+    const isStringTooShort = lastTokenText.length <= 1;
+
+    if (isStringTooShort) {
       return true;
     }
 
-    return last.text.startsWith('"') !== last.text.endsWith('"');
+    const hasStartingQuote = lastTokenText.startsWith('"');
+    const hasEndingQuote = lastTokenText.endsWith('"');
+    const isFormatInvalid = hasStartingQuote !== hasEndingQuote;
+
+    return isFormatInvalid;
   }
 
-  function tokenIsIdentifierOrInstruction(token?: Token) {
-    return token &&
-      (token.type === TokenType.IDENTIFIER ||
-        token.type === TokenType.INSTRUCTION);
+  /**
+   * Checks if a token is an identifier or an instruction.
+   */
+  function tokenIsIdentifierOrInstruction(token?: IToken): boolean {
+    const isIdentifier = token && token.type === TokenType.IDENTIFIER;
+    const isInstruction = token && token.type === TokenType.INSTRUCTION;
+    const isIdentifierOrInstruction = isIdentifier || isInstruction;
+
+    return !!isIdentifierOrInstruction;
   }
 
+  /**
+   * Recursively parses tokens into items.
+   */
   function parseTokens(
-    tokens: Token[],
+    tokens: IToken[],
     context: IContext = { i: 0, parentheses: 0, keys: 0, brackets: 0, pure: 0 },
   ): Item[] | Error | undefined {
-    if (tokens.length === 0) {
+    const isTokensEmpty = tokens.length === 0;
+
+    if (isTokensEmpty) {
       return [];
     }
 
-    let lastNonSpaceToken: Token | undefined,
-      result: Item[] = [],
-      lastNonSpaceTokenIndex: number = Number.MAX_SAFE_INTEGER,
-      raws: Token[] = [],
-      params: Token[] = [],
-      comments: Token[] = [],
-      token: Token | undefined,
-      wasPure: boolean = false;
+    let lastNonSpaceToken: IToken | undefined;
+    const result: Item[] = [];
+    let lastNonSpaceTokenIndex = Number.MAX_SAFE_INTEGER;
+    let raws: IToken[] = [];
+    let params: IToken[] = [];
+    let comments: IToken[] = [];
+    let token: IToken | undefined;
 
-    f1: for (; context.i < tokens.length; context.i++) {
+    f1:
+    for (; context.i < tokens.length; context.i++) {
       const i = context.i;
       token = tokens[context.i];
 
-      if (token.type === TokenType.EOF) {
-        if (context.parentheses) {
+      const isEof = token.type === TokenType.EOF;
+
+      if (isEof) {
+        const hasOpenParentheses = context.parentheses > 0;
+        const hasOpenBrackets = context.brackets > 0;
+        const hasOpenKeys = context.keys > 0;
+        const hasOpenPure = context.pure > 0;
+
+        if (hasOpenParentheses) {
           return error("Parenthese closure expected", token);
         }
 
-        if (context.brackets) {
+        if (hasOpenBrackets) {
           return error("Bracket closure expected", token);
         }
 
-        if (context.keys || context.pure) {
+        const isUnclosed = hasOpenKeys || hasOpenPure;
+
+        if (isUnclosed) {
           return error("Key closure expected", token);
         }
 
         break f1;
       }
 
-      d1: do {
-        if (token.type === TokenType.SEPARATOR) {
-          if (
-            context.brackets > 0 && !"[]".includes(token.text) ||
-            context.pure > 0 && !"{}".includes(token.text)
-          ) {
+      d1:
+      do {
+        const isSeparator = token.type === TokenType.SEPARATOR;
+
+        if (isSeparator) {
+          const isInvalidBracketContext = context.brackets > 0 &&
+            !"[]".includes(token.text);
+          const isInvalidPureContext = context.pure > 0 &&
+            !"{}".includes(token.text);
+          const isInvalidContext = isInvalidBracketContext ||
+            isInvalidPureContext;
+
+          if (isInvalidContext) {
             break d1;
           }
 
           const isPure = !tokenIsIdentifierOrInstruction(lastNonSpaceToken);
 
           switch (token.text) {
-            case "}":
-              if (context.pure === 0) {
-                context.keys--;
-              } else {
+            case "}": {
+              const isInPureBlock = context.pure > 0;
+
+              if (isInPureBlock) {
                 if (--context.pure > 0) {
                   break d1;
                 }
@@ -291,103 +482,151 @@ export namespace Core {
                 if (pushRawIfNeeded(result, raws, true)) {
                   raws = [];
                 }
+
                 continue f1;
               }
 
+              context.keys--;
+
               break f1;
-            case ";":
-              const left = tokenIsIdentifierOrInstruction(tokens[i - 1]);
-              const right = tokenIsIdentifierOrInstruction(tokens[i + 1]);
+            }
+
+            case ";": {
+              const previousToken = tokens[i - 1];
+              const nextToken = tokens[i + 1];
+              const isLeftIdentifier = tokenIsIdentifierOrInstruction(
+                previousToken,
+              );
+              const isRightIdentifier = tokenIsIdentifierOrInstruction(
+                nextToken,
+              );
 
               if (pushRawIfNeeded(result, raws)) {
                 raws = [];
               }
 
+              const isIdentifierContext = !isPure && !isRightIdentifier;
+
               switch (true) {
-                /* identifier1;identifier2 */
-                case left && right:
+                case isLeftIdentifier && isRightIdentifier:
                   break;
-                /* identifier[\s+]?; */
-                case !isPure && !right:
+
+                case isIdentifierContext:
                   if (lastNonSpaceToken) {
                     const lastItem = result.pop();
+
                     if (lastItem) {
-                      pushRawIfNeeded(
-                        result,
-                        lastItem.tokens!.slice(0, lastNonSpaceTokenIndex),
+                      const slicedTokens = lastItem.tokens!.slice(
+                        0,
+                        lastNonSpaceTokenIndex,
                       );
+                      pushRawIfNeeded(result, slicedTokens);
                     }
-                    result.push(
-                      new Element(lastNonSpaceToken, undefined, params),
+
+                    const element = new Element(
+                      lastNonSpaceToken,
+                      undefined,
+                      params,
                     );
+                    result.push(element);
                   }
                   break;
-                /* ;identifier */
-                case !left && right:
+
+                case !isLeftIdentifier && isRightIdentifier:
                   break;
               }
 
               continue f1;
-            case "\\":
-              if (!(tokens[++context.i].type === TokenType.SEPARATOR)) {
+            }
+
+            case "\\": {
+              const nextIndex = ++context.i;
+              const nextToken = tokens[nextIndex];
+              const isNextSeparator = nextToken.type === TokenType.SEPARATOR;
+
+              if (!isNextSeparator) {
                 context.i--;
               }
 
               token = tokens[context.i];
               break;
-            case "(":
-              if (context.parentheses > 0) {
+            }
+
+            case "(": {
+              const hasOpenParentheses = context.parentheses > 0;
+
+              if (hasOpenParentheses) {
                 return error("Invalid token", token);
               }
 
               params = [];
 
-              /* Skips the first '[' */
               if (context.parentheses++ === 0) {
                 continue f1;
               }
 
               break;
-            case ")":
+            }
+
+            case ")": {
               if (--context.parentheses < 0) {
                 return error("Invalid token", token);
               }
 
-              if (context.parentheses === 0) {
+              const isParenthesesClosed = context.parentheses === 0;
+
+              if (isParenthesesClosed) {
                 continue f1;
               }
 
               break;
-            case "[":
-              if (context.parentheses > 0) {
+            }
+
+            case "[": {
+              const hasOpenParentheses = context.parentheses > 0;
+
+              if (hasOpenParentheses) {
                 return error("Invalid token", token);
               }
 
               comments = [];
-              /* Skips the first '[' */
+
               if (context.brackets++ === 0) {
                 continue f1;
               }
 
               break;
-            case "]":
-              if (--context.brackets < 0 || context.parentheses > 0) {
+            }
+
+            case "]": {
+              const isInvalidBrackets = --context.brackets < 0;
+              const hasOpenParentheses = context.parentheses > 0;
+              const isInvalid = isInvalidBrackets || hasOpenParentheses;
+
+              if (isInvalid) {
                 return error("Invalid token", token);
               }
 
-              /* Skip the last ']' */
-              if (context.brackets === 0) {
+              const isBracketsClosed = context.brackets === 0;
+
+              if (isBracketsClosed) {
                 if (pushRawIfNeeded(result, raws)) {
                   raws = [];
                 }
 
-                result.push(new Comment(comments));
+                const comment = new Comment(comments);
+                result.push(comment);
+
                 continue f1;
               }
 
               break;
-            case "{":
-              if (context.parentheses > 0) {
+            }
+
+            case "{": {
+              const hasOpenParentheses = context.parentheses > 0;
+
+              if (hasOpenParentheses) {
                 return error("Invalid token", token);
               }
 
@@ -397,9 +636,10 @@ export namespace Core {
                 }
 
                 break d1;
-              } else {
-                context.keys++, raws = raws.slice(0, lastNonSpaceTokenIndex);
               }
+
+              context.keys++;
+              raws = raws.slice(0, lastNonSpaceTokenIndex);
 
               context.i++;
 
@@ -408,54 +648,101 @@ export namespace Core {
               }
 
               const children = parseTokens(tokens, context);
+              const isChildrenError = children instanceof Error;
 
-              if (children instanceof Error) {
+              if (isChildrenError) {
                 return children;
               }
 
               if (lastNonSpaceToken) {
-                result.push(new Element(lastNonSpaceToken, children, params));
+                const element = new Element(
+                  lastNonSpaceToken,
+                  children,
+                  params,
+                );
+                result.push(element);
               }
 
               continue f1;
+            }
           }
         }
       } while (false);
 
-      (
-        context.pure && raws ||
-        context.brackets && comments ||
-        context.parentheses && params ||
-        raws
-      ).push(token);
+      const stack = (() => {
+        const isPureBlock = context.pure > 0;
 
-      if (
-        (context.parentheses + context.brackets + context.pure) === 0 &&
-        token.type !== TokenType.SPACE &&
-        token.type !== TokenType.EOL
-      ) {
-        lastNonSpaceToken = token, lastNonSpaceTokenIndex = raws.length - 1;
+        if (isPureBlock) {
+          return raws;
+        }
+
+        const isBracketBlock = context.brackets > 0;
+
+        if (isBracketBlock) {
+          return comments;
+        }
+
+        const isParenthesesBlock = context.parentheses > 0;
+
+        if (isParenthesesBlock) {
+          return params;
+        }
+
+        return raws;
+      })();
+
+      stack.push(token);
+
+      const isOutsideNesting =
+        (context.parentheses + context.brackets + context.pure) === 0;
+      const isNotSpace = token.type !== TokenType.SPACE;
+      const isNotEol = token.type !== TokenType.EOL;
+      const isLastNonSpaceTokenCandidate = isOutsideNesting && isNotSpace &&
+        isNotEol;
+
+      if (isLastNonSpaceTokenCandidate) {
+        lastNonSpaceToken = token;
+        lastNonSpaceTokenIndex = raws.length - 1;
       }
     }
 
-    if (context.keys < 0) {
-      if (token) return error("Invalid token", token);
-      return new Error("Invalid token");
+    const isKeysInvalid = context.keys < 0;
+
+    if (isKeysInvalid) {
+      if (token) {
+        return error("Invalid token", token);
+      }
+
+      const invalidTokenError = new Error("Invalid token");
+
+      return invalidTokenError;
     }
 
     pushRawIfNeeded(result, raws);
 
-    if (result.length > 0) {
-      const lastItem = result.at(-1);
+    const hasResults = result.length > 0;
 
-      if (
-        lastItem && lastItem.isRaw() &&
-        stringHasInvalidFormat(lastItem.tokens || [])
-      ) {
-        const lastToken = lastItem.tokens?.at(-1);
-        if (lastToken) return error("Infinite string detected", lastToken);
-        return new Error("Infinite string detected");
+    if (hasResults) {
+      const lastItem = result.at(-1);
+      const isLastRaw = lastItem && lastItem.isRaw();
+
+      if (isLastRaw) {
+        const lastItemTokens = lastItem.tokens || [];
+        const isFormatInvalid = stringHasInvalidFormat(lastItemTokens);
+
+        if (isFormatInvalid) {
+          const lastToken = lastItemTokens.at(-1);
+
+          if (lastToken) {
+            return error("Infinite string detected", lastToken);
+          }
+
+          const infiniteStringError = new Error("Infinite string detected");
+
+          return infiniteStringError;
+        }
       }
+
       return result;
     }
 

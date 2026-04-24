@@ -24,8 +24,8 @@ SOFTWARE.
 
 export { Core } from "./src/core.ts";
 export {
-  type Token,
+  type IToken,
+  type ITokenPosition,
   Tokenizer,
-  type TokenPosition,
   TokenType,
 } from "./src/tokenizer.ts";
