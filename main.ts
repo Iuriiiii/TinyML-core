@@ -22,5 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-export { Core } from './src/core';
-export { Token, TokenPosition, TokenType, Tokenizer } from './src/tokenizer';
+export { Core } from "./src/core.ts";
+export {
+  type Token,
+  Tokenizer,
+  type TokenPosition,
+  TokenType,
+} from "./src/tokenizer.ts";
