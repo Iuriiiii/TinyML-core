@@ -283,7 +283,7 @@ export namespace Core {
   /**
    * Parses the source code into a tree of items.
    */
-  export function parse(source: string) {
+  export function parse(source: string): Item[] {
     const tokens = Tokenizer.tokenizate(source, {
       separators: "(){}[];:=,\\<>",
     });

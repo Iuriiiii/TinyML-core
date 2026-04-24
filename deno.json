@@ -13,6 +13,16 @@
     "@std/testing": "jsr:@std/testing@1"
   },
   "publish": {
-    "exclude": [".vscode"]
+    "exclude": [
+      ".vscode"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-namespace",
+        "no-explicit-any"
+      ]
+    }
   }
 }

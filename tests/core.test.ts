@@ -255,7 +255,9 @@ describe("Complex Parameters", () => {
 
   test("paramsToString should return correct string", () => {
     const el = tml[0] as Core.Element;
-    expect(el.paramsToString()).toBe('id="main", class="container", data-value=123');
+    expect(el.paramsToString()).toBe(
+      'id="main", class="container", data-value=123',
+    );
   });
 });
 
@@ -291,6 +293,8 @@ describe("Advanced Escape Tests", () => {
 
 describe("Infinite String Error", () => {
   test("Should throw infinite string error", () => {
-    expect(() => Core.parse('"unclosed string')).toThrow("Infinite string detected");
+    expect(() => Core.parse('"unclosed string')).toThrow(
+      "Infinite string detected",
+    );
   });
 });
