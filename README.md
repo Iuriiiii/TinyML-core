@@ -1,8 +1,10 @@
 # TinyML Core
 
-TinyML Core is a little, faster and lightweight module that will help you to parse the source code of TinyML.
+TinyML Core is a little, faster and lightweight module that will help you to
+parse the source code of TinyML.
 
-❌ Please don't use until we delete this message, this lib is under construction 🚫
+❌ Please don't use until we delete this message, this lib is under construction
+🚫
 
 ## Installation
 
@@ -10,7 +12,8 @@ TinyML Core is a little, faster and lightweight module that will help you to par
 
 ## Concept
 
-The structure pattern is similar to HTML, you will get tags, content, params and comments.
+The structure pattern is similar to HTML, you will get tags, content, params and
+comments.
 
 <table>
 <tr>
@@ -88,10 +91,10 @@ html(lang="en") {
 ##### Example:
 
 ```js
-import { Core } from 'tinyml-core/common';
+import { Core } from "tinyml-core/common";
 
 try {
-    var parsed = Core.parse(`
+  var parsed = Core.parse(`
     thisIsATag(param1) {
         This is a raw content
         tag{This is raw content too}
@@ -99,7 +102,7 @@ try {
     } Raw content again
 `);
 } catch (e) {
-    console.error(e);
+  console.error(e);
 }
 ```
 
@@ -107,51 +110,59 @@ try {
 
 `Core.parse` returns an array of the following kind of elements if succedes:
 
-* <b>Core.Element</b>
-* <b>Core.Raw</b>
-* <b>Core.Comment</b>
-* <b>Core.Code</b>
+- <b>Core.Element</b>
+- <b>Core.Raw</b>
+- <b>Core.Comment</b>
+- <b>Core.Code</b>
 
 ### Global methods & members
 
-The following members & methods will be inherited by `Core.Raw`, `Core.Element`, `Core.Comment` and `Core.Code`
+The following members & methods will be inherited by `Core.Raw`, `Core.Element`,
+`Core.Comment` and `Core.Code`
 
 🔹 <b>tokens: Token[]</b> - All tokens catched for the instance.
 
 🔹 <b>isRaw(): boolean</b> - Checks if the instance is a `Core.Raw` instance.
 
-🔹 <b>isElement(): boolean</b> - Checks if the instance is a `Core.Element` instance.
+🔹 <b>isElement(): boolean</b> - Checks if the instance is a `Core.Element`
+instance.
 
-🔹 <b>isComment(): boolean</b> - Checks if the instance is a `Core.Comment` instance.
+🔹 <b>isComment(): boolean</b> - Checks if the instance is a `Core.Comment`
+instance.
 
 🔹 <b>isCode(): boolean</b> - Checks if the instance is a `Core.Code` instance.
 
-🔹 <b>toString(): string</b> - A string representation of all tokens contained in the instance.
+🔹 <b>toString(): string</b> - A string representation of all tokens contained
+in the instance.
 
 ### The `Token` data type
 
-This data type contains information about an element of the source code. It has the following members:
+This data type contains information about an element of the source code. It has
+the following members:
 
 🔹 <b>text: string</b> - The string of the token.
 
-🔹 <b>pos: TokenPosition /* {x: number, y: number} */</b> - The location of the token in the source code.
+🔹 <b>pos: TokenPosition /* {x: number, y: number} */</b> - The location of the
+token in the source code.
 
 🔹 <b>text: TokenType</b> - The token type.
-
 
 ### Core.Element
 
 This data type defines an element. It is composed by the following members.
 
-🔹 <b>tag: Token</b> - The token that contain the tag name and location. The type ever will be `TokenType.identifier`.
+🔹 <b>tag: Token</b> - The token that contain the tag name and location. The
+type ever will be `TokenType.identifier`.
 
 🔹 <b>params: Token[]</b> - All tokens that compounds the parameters.
 
-🔹 <b>children: (Core.Element | Core.Raw | Core.Comment | Core.Code)[] | undefined</b> - The content inside of. An array of TinyML elements or undefined.
+🔹 <b>children: (Core.Element | Core.Raw | Core.Comment | Core.Code)[] |
+undefined</b> - The content inside of. An array of TinyML elements or undefined.
 
 ### Core.Raw
 
-This data type different to `Core.Element` element, generally the content of this last one.
+This data type different to `Core.Element` element, generally the content of
+this last one.
 
 > Does not contain new methods or members by itself.
 
@@ -167,7 +178,7 @@ This data type defines the content between unnamed `{` and `}` characters.
 
 > Does not contain new methods or members by itself.
 
-####
+#### 
 
 <table>
 <tr>
