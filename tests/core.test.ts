@@ -298,3 +298,53 @@ describe("Infinite String Error", () => {
     );
   });
 });
+
+describe("Raw code differentiation tests", () => {
+  test("Should differentiate between raw code and non-raw code within an element", () => {
+    const source = "body{ < > {{ < > }} }";
+    const tml = Core.parse(source);
+
+    expect(tml.length).toBe(1);
+    const body = tml[0] as Core.Element;
+    expect(body.tag.text).toBe("body");
+
+    const children = body.children!;
+    // Expected: [Raw(" < > "), Code("{ < > }"), Raw(" ")]
+    expect(children.length).toBe(3);
+
+    expect(children[0]).toBeInstanceOf(Core.Raw);
+    expect(children[0].toString()).toBe(" < > ");
+
+    expect(children[1]).toBeInstanceOf(Core.Code);
+    expect(children[1].toString()).toBe("{ < > }");
+
+    expect(children[2]).toBeInstanceOf(Core.Raw);
+    expect(children[2].toString()).toBe(" ");
+  });
+
+  test("Should handle multiple raw blocks mixed with text", () => {
+    const source = "container { text1 : {code1} text2 : {code2} text3 }";
+    const tml = Core.parse(source);
+
+    const container = tml[0] as Core.Element;
+    const children = container.children!;
+
+    // [Raw(" text1 : "), Code("code1"), Raw(" text2 : "), Code("code2"), Raw(" text3 ")]
+    expect(children.length).toBe(5);
+
+    expect(children[0]).toBeInstanceOf(Core.Raw);
+    expect(children[0].toString()).toBe(" text1 : ");
+
+    expect(children[1]).toBeInstanceOf(Core.Code);
+    expect(children[1].toString()).toBe("code1");
+
+    expect(children[2]).toBeInstanceOf(Core.Raw);
+    expect(children[2].toString()).toBe(" text2 : ");
+
+    expect(children[3]).toBeInstanceOf(Core.Code);
+    expect(children[3].toString()).toBe("code2");
+
+    expect(children[4]).toBeInstanceOf(Core.Raw);
+    expect(children[4].toString()).toBe(" text3 ");
+  });
+});

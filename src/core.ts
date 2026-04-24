@@ -631,6 +631,10 @@ export namespace Core {
 
               if (isPure) {
                 if (++context.pure === 1) {
+                  if (pushRawIfNeeded(result, raws)) {
+                    raws = [];
+                  }
+
                   continue f1;
                 }
 
@@ -639,7 +643,6 @@ export namespace Core {
 
               context.keys++;
               raws = raws.slice(0, lastNonSpaceTokenIndex);
-
               context.i++;
 
               if (pushRawIfNeeded(result, raws)) {
