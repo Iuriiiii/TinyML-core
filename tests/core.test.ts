@@ -92,7 +92,6 @@ Ends with raw content
   });
 
   test('"title" element should contain "Hola Mundo" raw content', () => {
-    // console.log(title);
     expect((title.children![0] as Core.Raw).toString().trim()).toBe(
       "Hola Mundo",
     );

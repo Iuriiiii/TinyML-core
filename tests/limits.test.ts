@@ -11,7 +11,6 @@ describe("TinyML Limits - Deep Nesting", () => {
     }
 
     const tml = Core.parse(source);
-    // console.log("Deep nesting tml[0]:", JSON.stringify(tml[0], (k, v) => k === 'tokens' ? undefined : v, 2));
     expect(tml).toBeInstanceOf(Array);
     expect(tml.length).toBe(1);
 
