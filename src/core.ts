@@ -461,6 +461,68 @@ export namespace Core {
         break f1;
       }
 
+      // Check for raw code block {{{ ... }}}
+      if (
+        token.text === "{" &&
+        tokens[i + 1]?.text === "{" &&
+        tokens[i + 2]?.text === "{"
+      ) {
+        if (
+          context.brackets === 0 && context.parentheses === 0 &&
+          context.pure === 0
+        ) {
+          const startToken = token;
+          context.i += 2; // Move to the last { of {{{
+          const rawCodeTokens: IToken[] = [];
+
+          context.i++; // Skip the last { to start content
+          while (context.i < tokens.length) {
+            const currentToken = tokens[context.i];
+            if (
+              currentToken.text === "}" &&
+              tokens[context.i + 1]?.text === "}" &&
+              tokens[context.i + 2]?.text === "}"
+            ) {
+              break;
+            }
+            if (currentToken.type === TokenType.EOF) {
+              return error("Raw code closure expected", startToken);
+            }
+            rawCodeTokens.push(currentToken);
+            context.i++;
+          }
+
+          if (context.i >= tokens.length) {
+            return error("Raw code closure expected", startToken);
+          }
+
+          const isElementBody = lastNonSpaceToken && (
+            lastNonSpaceTokenIndex === raws.length - 1 ||
+            params.length > 0
+          );
+
+          if (isElementBody) {
+            raws = raws.slice(0, lastNonSpaceTokenIndex);
+            pushRawIfNeeded(result, raws);
+            raws = [];
+
+            const code = new Code(rawCodeTokens);
+            const element = new Element(lastNonSpaceToken!, [code], params);
+            result.push(element);
+            params = [];
+          } else {
+            pushRawIfNeeded(result, raws);
+            raws = [];
+            result.push(new Code(rawCodeTokens));
+          }
+
+          context.i += 2; // Skip first two } of }}}
+          // The third } will be skipped by the loop's context.i++
+          lastNonSpaceToken = undefined;
+          continue f1;
+        }
+      }
+
       d1:
       do {
         const isSeparator = token.type === TokenType.SEPARATOR;

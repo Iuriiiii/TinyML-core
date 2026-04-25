@@ -47,7 +47,7 @@ comments.
 <td>
 
 ```
-{<!DOCTYPE html>}
+{{{<!DOCTYPE html>}}}
 html(lang="en") {
     head {
         title {The page title}
@@ -174,9 +174,9 @@ This data type defines the content between `[` and `]` characters.
 
 ### Core.Code
 
-This data type defines the content between unnamed `{` and `}` characters.
-
-> Does not contain new methods or members by itself.
+This data type defines the content between unnamed `{{{` and `}}}` characters. All
+content inside these delimiters is treated as raw code and is not parsed
+recursively.
 
 #### 
 
@@ -184,6 +184,7 @@ This data type defines the content between unnamed `{` and `}` characters.
 <tr>
 <th>Named Block</th>
 <th>Unnamed Block</th>
+<th>Raw Code Block</th>
 </tr>
 <tr>
 <td>
@@ -201,6 +202,15 @@ namedBlock {
 {
     content of unnamed block
 }
+```
+
+</td>
+<td>
+
+```
+{{{
+    raw content { with braces }
+}}}
 ```
 
 </td>
