@@ -155,7 +155,7 @@ describe("Errors", () => {
     "]",
     "html([]){}",
     "html({}){}",
-    '"',
+    'html("){}',
     "html{this is raw or should be;p{adsad} is a code}}",
   ];
 
@@ -292,10 +292,25 @@ describe("Advanced Escape Tests", () => {
 });
 
 describe("Infinite String Error", () => {
-  test("Should throw infinite string error", () => {
-    expect(() => Core.parse('"unclosed string')).toThrow(
-      "Infinite string detected",
+  test("Should not throw infinite string error", () => {
+    expect(() => Core.parse('("unclosed string')).toThrow(
+      "Parenthese closure expected",
     );
+  });
+});
+
+describe("Regression Tests", () => {
+  test("Should handle unclosed quotes outside parentheses", () => {
+    const source = `div{ Escaped: < > | Raw: {{ < > }} | Escaped again: & " }`;
+    const tml = Core.parse(source);
+    expect(tml.length).toBe(1);
+    expect(tml[0]).toBeInstanceOf(Core.Element);
+  });
+
+  test("Should handle nested pure blocks with quotes", () => {
+    const source = `div{ {{ Escaped: < > | Raw: {{ < > }} | Escaped again: & " }} }`;
+    const tml = Core.parse(source);
+    expect(tml.length).toBe(1);
   });
 });
 

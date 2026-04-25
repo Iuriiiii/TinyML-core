@@ -13,26 +13,26 @@ describe("Return Types", () => {
 });
 
 describe("Token Tests", () => {
-  const tokens = Tokenizer.tokenizate('{"hola mundo"} How are you');
+  const tokens = Tokenizer.tokenizate('({"hola mundo"}) How are you');
 
   test("1st token should be a separator", () => {
     expect(tokens[0].type).toBe(TokenType.SEPARATOR);
   });
 
-  test("2nd token should be a string", () => {
-    expect(tokens[1].type).toBe(TokenType.STRING);
+  test("2nd token should be a separator", () => {
+    expect(tokens[1].type).toBe(TokenType.SEPARATOR);
   });
 
   test("3rd token should be a string", () => {
-    expect(tokens[2].type).toBe(TokenType.SEPARATOR);
+    expect(tokens[2].type).toBe(TokenType.STRING);
   });
 
-  test("4th token should be a space", () => {
-    expect(tokens[3].type).toBe(TokenType.SPACE);
+  test("4th token should be a separator", () => {
+    expect(tokens[3].type).toBe(TokenType.SEPARATOR);
   });
 
-  test("5th token should be a identifier", () => {
-    expect(tokens[4].type).toBe(TokenType.IDENTIFIER);
+  test("5th token should be a separator", () => {
+    expect(tokens[4].type).toBe(TokenType.SEPARATOR);
   });
 });
 
@@ -71,7 +71,7 @@ describe("Token Types", () => {
 
   test("Tokenizer should return just an string token", () => {
     expect(
-      Tokenizer.tokenizate('"This is a string"')[0].type === TokenType.STRING,
+      Tokenizer.tokenizate('("This is a string")')[1].type === TokenType.STRING,
     ).toBe(true);
   });
 });

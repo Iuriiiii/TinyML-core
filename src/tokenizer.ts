@@ -78,7 +78,7 @@ export interface IToken {
  */
 export namespace Tokenizer {
   const SPACES = " \t\r\n" as const;
-  const SEPARATORS = "\\:;[](){},." as const;
+  const SEPARATORS = "\\:;[](){},.\"" as const;
   const OPERATORS = "+-/*^%=!" as const;
   const NUMBERS = "0123456789" as const;
   const CHARACTERS =
@@ -244,15 +244,24 @@ export namespace Tokenizer {
     const result: IToken[] = [];
     const currentPos: ITokenPosition = { x: 1, y: 1 };
     let isInsideString = false;
+    let parentheses = 0;
 
     for (let i = 0; i < source.length; i++) {
       const char = source[i];
 
-      switch (true) {
-        case char === '"': {
-          isInsideString = !isInsideString;
+      if (!isInsideString) {
+        if (char === "(") {
+          parentheses++;
+        } else if (char === ")") {
+          parentheses--;
+        }
+      }
 
-          if (isInsideString) {
+      switch (true as boolean) {
+        case char === '"': {
+          if (parentheses > 0) {
+            isInsideString = !isInsideString;
+
             currentToken = resizeIf({
               list: result,
               currentToken,
@@ -260,7 +269,16 @@ export namespace Tokenizer {
               char,
               pos: currentPos,
             });
+          } else {
+            currentToken = resizeIf({
+              list: result,
+              currentToken,
+              targetType: TokenType.SEPARATOR,
+              char,
+              pos: currentPos,
+            });
           }
+
           break;
         }
 

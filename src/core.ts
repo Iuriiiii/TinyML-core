@@ -285,7 +285,7 @@ export namespace Core {
    */
   export function parse(source: string): Item[] {
     const tokens = Tokenizer.tokenizate(source, {
-      separators: "(){}[];:=,\\<>",
+      separators: "(){}[];:=,\\<>\"",
     });
 
     const tree = parseTokens(tokens);
@@ -414,8 +414,8 @@ export namespace Core {
       return [];
     }
 
-    let lastNonSpaceToken: IToken | undefined;
     const result: Item[] = [];
+    let lastNonSpaceToken: IToken | undefined;
     let lastNonSpaceTokenIndex = Number.MAX_SAFE_INTEGER;
     let raws: IToken[] = [];
     let params: IToken[] = [];
@@ -426,7 +426,6 @@ export namespace Core {
     for (; context.i < tokens.length; context.i++) {
       const i = context.i;
       token = tokens[context.i];
-
       const isEof = token.type === TokenType.EOF;
 
       if (isEof) {
@@ -434,6 +433,16 @@ export namespace Core {
         const hasOpenBrackets = context.brackets > 0;
         const hasOpenKeys = context.keys > 0;
         const hasOpenPure = context.pure > 0;
+        // const isMoreThanOneSingleToken = context.i > 0;
+
+        // if (isMoreThanOneSingleToken) {
+        //   const previusToken = tokens[context.i - 1];
+        //   const previousTokens = tokens.slice(0, context.i - 1);
+
+        //   if (previusToken.type === TokenType.STRING && !stringHasInvalidFormat(previousTokens)) {
+        //     return error("Missing closing quote", previusToken);
+        //   }
+        // }
 
         if (hasOpenParentheses) {
           return error("Parenthese closure expected", token);
@@ -457,6 +466,24 @@ export namespace Core {
         const isSeparator = token.type === TokenType.SEPARATOR;
 
         if (isSeparator) {
+          if (token.text === "\\") {
+            lastNonSpaceToken = undefined;
+            const nextIndex = ++context.i;
+            const nextToken = tokens[nextIndex];
+
+            const isNextSeparator = nextToken && nextToken.type === TokenType.SEPARATOR;
+            const isNextOperator = nextToken && nextToken.type === TokenType.OPERATOR;
+            const isNextEscapable = isNextSeparator || isNextOperator;
+
+            if (!isNextEscapable) {
+              context.i--;
+            }
+
+            token = tokens[context.i];
+
+            break d1;
+          }
+
           const isInvalidBracketContext = context.brackets > 0 &&
             !"[]".includes(token.text);
           const isInvalidPureContext = context.pure > 0 &&
@@ -473,6 +500,7 @@ export namespace Core {
           switch (token.text) {
             case "}": {
               const isInPureBlock = context.pure > 0;
+              lastNonSpaceToken = undefined;
 
               if (isInPureBlock) {
                 if (--context.pure > 0) {
@@ -494,32 +522,57 @@ export namespace Core {
             case ";": {
               const previousToken = tokens[i - 1];
               const nextToken = tokens[i + 1];
-              const isLeftIdentifier = tokenIsIdentifierOrInstruction(
-                previousToken,
-              );
-              const isRightIdentifier = tokenIsIdentifierOrInstruction(
-                nextToken,
-              );
+              const isLeftIdentifier =
+                tokenIsIdentifierOrInstruction(previousToken);
+              const isRightIdentifier =
+                tokenIsIdentifierOrInstruction(nextToken);
 
               if (pushRawIfNeeded(result, raws)) {
                 raws = [];
               }
 
-              const isIdentifierContext = !isPure && !isRightIdentifier;
-
               switch (true) {
                 case isLeftIdentifier && isRightIdentifier:
                   break;
 
-                case isIdentifierContext:
+                case isLeftIdentifier && !isPure && !isRightIdentifier:
                   if (lastNonSpaceToken) {
                     const lastItem = result.pop();
 
                     if (lastItem) {
-                      const slicedTokens = lastItem.tokens!.slice(
-                        0,
-                        lastNonSpaceTokenIndex,
-                      );
+                      const slicedTokens =
+                        lastItem.tokens!.slice(0, lastNonSpaceTokenIndex);
+                      pushRawIfNeeded(result, slicedTokens);
+                    }
+
+                    const element = new Element(
+                      lastNonSpaceToken,
+                      undefined,
+                      params,
+                    );
+                    lastNonSpaceToken = undefined;
+                    result.push(element);
+                  }
+                  break;
+                case isLeftIdentifier && !isRightIdentifier:
+                  const element = new Element(
+                    lastNonSpaceToken!,
+                    undefined,
+                    params,
+                  );
+                  result.push(element);
+                  lastNonSpaceToken = undefined;
+
+                  break;
+                case !isLeftIdentifier && isRightIdentifier:
+                  break;
+                default: {
+                  if (lastNonSpaceToken) {
+                    const lastItem = result.pop();
+
+                    if (lastItem) {
+                      const slicedTokens =
+                        lastItem.tokens!.slice(0, lastNonSpaceTokenIndex);
                       pushRawIfNeeded(result, slicedTokens);
                     }
 
@@ -529,27 +582,14 @@ export namespace Core {
                       params,
                     );
                     result.push(element);
+                    lastNonSpaceToken = undefined;
+                  } else {
+                    raws.push(token);
                   }
-                  break;
-
-                case !isLeftIdentifier && isRightIdentifier:
-                  break;
+                }
               }
 
               continue f1;
-            }
-
-            case "\\": {
-              const nextIndex = ++context.i;
-              const nextToken = tokens[nextIndex];
-              const isNextSeparator = nextToken.type === TokenType.SEPARATOR;
-
-              if (!isNextSeparator) {
-                context.i--;
-              }
-
-              token = tokens[context.i];
-              break;
             }
 
             case "(": {
@@ -583,6 +623,7 @@ export namespace Core {
             }
 
             case "[": {
+              lastNonSpaceToken = undefined;
               const hasOpenParentheses = context.parentheses > 0;
 
               if (hasOpenParentheses) {
@@ -598,6 +639,7 @@ export namespace Core {
             }
 
             case "]": {
+              lastNonSpaceToken = undefined;
               const isInvalidBrackets = --context.brackets < 0;
               const hasOpenParentheses = context.parentheses > 0;
               const isInvalid = isInvalidBrackets || hasOpenParentheses;
@@ -628,8 +670,16 @@ export namespace Core {
               if (hasOpenParentheses) {
                 return error("Invalid token", token);
               }
-
               if (isPure) {
+                const previousToken = tokens[i - 1] as IToken | undefined;
+
+                if (previousToken) {
+                  if (previousToken.type === TokenType.OPERATOR && previousToken.text === "!") {
+                    raws.pop();
+                    lastNonSpaceToken = undefined;
+                  }
+                }
+
                 if (++context.pure === 1) {
                   if (pushRawIfNeeded(result, raws)) {
                     raws = [];
@@ -665,6 +715,7 @@ export namespace Core {
                 result.push(element);
               }
 
+              lastNonSpaceToken = undefined;
               continue f1;
             }
           }
@@ -699,8 +750,8 @@ export namespace Core {
         (context.parentheses + context.brackets + context.pure) === 0;
       const isNotSpace = token.type !== TokenType.SPACE;
       const isNotEol = token.type !== TokenType.EOL;
-      const isLastNonSpaceTokenCandidate = isOutsideNesting && isNotSpace &&
-        isNotEol;
+      const isLastNonSpaceTokenCandidate =
+        isOutsideNesting && isNotSpace && isNotEol;
 
       if (isLastNonSpaceTokenCandidate) {
         lastNonSpaceToken = token;
